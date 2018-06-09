@@ -205,9 +205,6 @@ function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_su
     behavior[:Day2] = Day2#file properties are not reliable for the date of the session
     behavior[:Day] = Date(Day2,"yyyymmdd")
     behavior = behavior[[(bho in good_days) for bho in behavior[:Day]],:];
-    println("difference found in behavior dates: ")
-    println(size(find(behavior[:Day]!=behavior[:Day2])))
-    #behavior = behavior[[(d in good_days) for d in behavior[:Day]],:];
     println("accordance between cam and behavior dates");
     println(sort(union(behavior[:Day])) == sort(union(camera[:Day])));
     if sort(union(behavior[:Day])) != sort(union(camera[:Day]))

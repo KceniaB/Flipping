@@ -28,9 +28,13 @@ include("tools.jl")
 include("tools_photo.jl")
 plotly()
 
-export process_pokes,gatherfilesphotometry, check_fiberlocation,
-adjust_matfile, read_log, compress_analog, find_events, observe_pokes,
-adjust_logfile, ghost_buster,add_streaks,process_photo,create_processed_files
+export Photometry_Struct
+export process_pokes,gatherfilesphotometry, check_fiberlocation
+export adjust_matfile, adjust_logfile
+export read_log, compress_analog, find_events, observe_pokes
+export create_processed_files,process_photo, add_streaks
+export ghost_buster
+
 
 struct Photometry_Struct
            behaviour::DataFrames.AbstractDataFrame

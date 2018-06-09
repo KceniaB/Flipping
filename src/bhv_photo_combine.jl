@@ -3,7 +3,31 @@
 include("process_behaviour.jl")
 plotly()
 ##
-
+"""
+'check_accordance'
+"""
+function check_accordance!(bhv,events,analog_filepath,rec_type)
+    if size(bhv,1)!=size(events,1)
+        if size(bhv,1)/size(events,1)>1.5
+            analog, events = adjust_logfile(analog_filepath; force = true)
+            println("force 2 side poke reading")
+            rec_type = true
+        end
+        if size(bhv,1)>size(events,1)
+            difference = size(bhv,1) - size(events,1)
+            println("bhv pokes - events pokes = ", difference)
+            short_pokes = ghost_buster(bhv,difference)
+        end
+        if size(bhv,1)==size(events,1)
+         println("All good file adjusted")
+        else
+            println("Ops it didn't work")
+            println("no solution found")
+            println("pokes in bhv: ",size(bhv,1))
+            println("pokes in events: ",size(events,1))
+        end
+    end
+end
 """
 `ghost_buster`
 """
@@ -61,25 +85,7 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000)
     cam = adjust_matfile(mat_filepath);
     analog, events, rec_type = adjust_logfile(analog_filepath,conversion_rate =fps, acquisition_rate =NiDaq_rate);
     bhv = process_pokes(raw_path);
-    if size(bhv,1)!=size(events,1)
-        if size(bhv,1)/size(events,1)>1.5
-            analog, events = adjust_logfile(analog_filepath; force = true)
-            println("force 2 side poke reading")
-        end
-        if size(bhv,1)>size(events,1)
-            difference = size(bhv,1) - size(events,1)
-            println("bhv pokes - events pokes = ", difference)
-            short_pokes = ghost_buster(bhv,difference)
-        end
-        if size(bhv,1)==size(events,1)
-         println("All good file adjusted")
-        else
-            println("Ops it didn't work")
-            println("no solution found")
-            println("pokes in bhv: ",size(bhv,1))
-            println("pokes in events: ",size(events,1))
-        end
-    end
+    check_accordance!(bhv,events,analog_filepath,rec_type)
     if !rec_type
         analog[:L_p] = 0.0
         for i=1:size(events,1)
