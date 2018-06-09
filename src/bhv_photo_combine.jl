@@ -4,7 +4,7 @@ include("process_behaviour.jl")
 plotly()
 ##
 """
-'check_accordance'
+'check_accordance!'
 """
 function check_accordance!(bhv,events,analog_filepath,rec_type)
     if size(bhv,1)!=size(events,1)
@@ -25,6 +25,21 @@ function check_accordance!(bhv,events,analog_filepath,rec_type)
             println("no solution found")
             println("pokes in bhv: ",size(bhv,1))
             println("pokes in events: ",size(events,1))
+        end
+    end
+end
+
+"""
+'edit_merged_pokes_file!'
+"""
+function edit_events!(bhv,events,analog)
+    analog[:L_p] = 0.0
+    for i=1:size(events,1)
+        events[i,:Streak_n] = bhv[i,:Streak_n]
+        if bhv[i,:Side]
+            events[i,:Side] = "L"
+        else
+            events[i,:Side] = "R"
         end
     end
 end
@@ -83,19 +98,18 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000)
     analog_filepath = DataIndex[idx,:Log_Path]
     raw_path = DataIndex[idx,:Bhv_Path]
     cam = adjust_matfile(mat_filepath);
+    #events is a DataFrame with the PokeIn and PokeOut frames
+    #rec_type is true if rewards were tracked
     analog, events, rec_type = adjust_logfile(analog_filepath,conversion_rate =fps, acquisition_rate =NiDaq_rate);
     bhv = process_pokes(raw_path);
+    # some file recorded separetely Left and Righe Pokes
+    # but not the other task info, so check check_accordance
+    # updates rectype
     check_accordance!(bhv,events,analog_filepath,rec_type)
+    # if pokes where recorded only on one trace streaks
+    #have to be infered from bhv
     if !rec_type
-        analog[:L_p] = 0.0
-        for i=1:size(events,1)
-            events[i,:Streak_n] = bhv[i,:Streak_n]
-            if bhv[i,:Side]
-                events[i,:Side] = "L"
-            else
-                events[i,:Side] = "R"
-            end
-        end
+        edit_events!(bhv,events,analog)
     end
     analog = add_streaks(analog, events)
     trace = join(cam,analog,on=:Frame);
