@@ -101,10 +101,10 @@ function create_pokes_dataframe(Directory_path::String,Exp_type::String,Exp_name
 end
 
 """
-`create_streak_dataframe`
+`process_streaks`
 From the pokes dataframe creates one for streaks
 """
-function create_streak_dataframe(data::DataFrames.AbstractDataFrame,Directory_path::String,Exp_type::String,Exp_name::String)
+function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     columns_list = [:Side, :Stim, :Correct, :Condition, :Protocol, :Block,
         :LastBlock, :BlockCount, :ReverseStreak_n, :Wall, :ExpDay, :Area, :Gen];
     println("Missing Columns $(setdiff(columns_list, names(data)))")
@@ -142,10 +142,15 @@ function create_streak_dataframe(data::DataFrames.AbstractDataFrame,Directory_pa
     if streak_table[:Session] == streak_table[:Session2]
         delete!(streak_table, :Session2)
     end
-    #### Save streaktable
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
-    FileIO.save(filetosave,streak_table)
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
-    FileIO.save(filetosave,streak_table)
+    if photometry
+        frames = by(data, [:Session, :Streak_n,]) do df
+            dd = DataFrame(
+            In = df[1,:In],
+            Out = df[end,:Out]
+            )
+        end
+        streak_table[:In] = frames[:In]
+        streak_table[:Out] = frames[:Out]
+    end
     return streak_table
 end

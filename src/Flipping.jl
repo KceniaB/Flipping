@@ -26,18 +26,21 @@ include("bhv_photo_combine.jl")
 include("searchfile.jl")
 include("tools.jl")
 include("tools_photo.jl")
+include("saving&loading.jl")
 plotly()
 
-export Photometry_Struct
-export process_pokes,gatherfilesphotometry, check_fiberlocation
+export PhotometryStructure
+export process_pokes,process_streaks
+export gatherfilesphotometry, check_fiberlocation
 export adjust_matfile, adjust_logfile
 export read_log, compress_analog, find_events, observe_pokes
-export create_processed_files,process_photo, add_streaks
-export ghost_buster
+export process_photo, add_streaks,ghost_buster
+export carica, create_processed_files, combine_PhotometryStructures
 
 
-struct Photometry_Struct
-           behaviour::DataFrames.AbstractDataFrame
+mutable struct PhotometryStructure
+           pokes::DataFrames.AbstractDataFrame
+           streaks::DataFrames.AbstractDataFrame
            traces::DataFrames.AbstractDataFrame
        end
 

@@ -91,9 +91,15 @@ function ghost_buster(bhv,difference;dur_threshold = 0.1019999999999)
 end
 """
 `process_photo`
-
+It requires a DataIndex table and the raw to process
+keywars:
+fps(frame per second) = camera acquisition rate default is 50
+Nidaq_rate = it's the rate of acquisition of the behaviour, default is 1000
+onlystructure = by default return only the PhotometryStructure
+    if false it the following variables
+    structure, traces, events, bhv, streaks
 """
-function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000)
+function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = true)
     mat_filepath = DataIndex[idx,:Cam_Path]
     analog_filepath = DataIndex[idx,:Log_Path]
     raw_path = DataIndex[idx,:Bhv_Path]
@@ -112,44 +118,20 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000)
         edit_events!(bhv,events,analog)
     end
     analog = add_streaks(analog, events)
+    #extended trace info
     trace = join(cam,analog,on=:Frame);
-    start =  events[1,:In]-5*fps
-    if start<1
-        start = 1
-    end
-    finish = events[1,:Out]+5*fps
-    if finish > size(trace,1)
-        finish = size(trace,1)
-    end
+    #essential traces only Pokes signals and references
+    Cols = trace.colindex.names;
+    Columns = string.(Cols);
+    result = Columns[contains.(Columns,"_sig").|contains.(Columns,"_ref")]
+    push!(result,"Pokes")
+    essential = trace[:,Symbol.(result)]
     bhv = join(bhv,events[:,[:Poke_n,:In,:Out]], on = :Poke_n)
-    return trace, events, bhv
-end
-
-"""
-`create_processed_files`
-"""
-function create_processed_files(DataIndex)
-    All_traces =DataFrame()
-    All_events =DataFrame()
-    All_pokes =DataFrame()
-    for idx = 1:size(DataIndex,1)
-        println(DataIndex[idx,:Session], " idx = ",idx)
-        trace, events, bhv = process_photo(DataIndex,idx)
-        trace_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Trace_"*DataIndex[idx,:Session]*".csv"
-        events_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Events_"*DataIndex[idx,:Session]*".csv"
-        bhv_file = DataIndex[idx,:Exp_Path]*"Bhv/"*DataIndex[idx,:Session]*".csv"
-        FileIO.save(trace_file,trace)
-        FileIO.save(events_file,events)
-        FileIO.save(bhv_file,bhv)
-        if isempty(All_traces)
-            All_traces = trace
-            All_events = events
-            All_pokes = bhv
-        else
-            append!(All_traces,trace)
-            append!(All_events,events)
-            append!(All_pokes,bhv)
-        end
+    streaks = process_streaks(bhv; photometry = true)
+    structure = PhotometryStructure(bhv,streaks,essential);
+    if onlystructure
+        return structure
+    elseif !onlystructure
+        return structure, traces, events, bhv, streaks
     end
-    return All_traces, All_events, All_pokes
 end
