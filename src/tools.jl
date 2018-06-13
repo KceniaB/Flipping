@@ -1,5 +1,3 @@
-export get_FromStim, custom_bin
-
 """
 `convert2Bool(df,symbols)`
 
@@ -52,6 +50,7 @@ function get_BHVmousedate(filepath)
     day = "20"*giorno
     return mouse, day, session
 end
+
 """
 `get_protocollo(df)`
 

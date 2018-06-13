@@ -1,8 +1,3 @@
-
-##
-include("process_behaviour.jl")
-plotly()
-##
 """
 'check_accordance!'
 """

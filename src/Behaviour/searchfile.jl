@@ -18,21 +18,6 @@ function paths_dataframe(bhv)
     return behavior
 end
 
-"""
-`get_BHVmousedate(filepath)`
-
-it extract the session name by Regular expression match:
-It assumes that session name is composed by
-2 characters and a number for the mouse
-followed by the date
-"""
-function get_BHVmousedate(filepath)
-    sessionREGEX = match(r"[a-zA-Z]{2}\d+_\d{6}",filepath); #the result is a regex object with several info
-    session = sessionREGEX.match;
-    mouse, giorno = split(session,"_")[1:2]
-    day = "20"*giorno
-    return mouse, day, session
-end
 
 """
 `createfilelist`
