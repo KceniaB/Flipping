@@ -34,7 +34,7 @@ In this way it automatically calls the first key of the dictionary
 and retunrs the variable stored
 """
 function carica(filename)
-    file = FileIO.load(filename) #streak_table
+    file = FileIO.load(filename)
     data = file[collect(keys(file))[1]]
     data
 end

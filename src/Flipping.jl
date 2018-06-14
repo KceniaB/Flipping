@@ -28,10 +28,10 @@ include(joinpath("Behaviour","searchfile.jl"))
 include(joinpath("Photometry","bhv_photo_combine.jl"))
 include(joinpath("Photometry","acquire_photo.jl"))
 include(joinpath("Photometry","tools_photo.jl"))
-plotly()
 
-export PhotometryStructure, verify_names
-export process_pokes,process_streaks
+
+export PhotometryStructure, verify_names, listvalues
+export process_pokes,process_streaks, concat_data!
 export get_FromStim, custom_bin
 export gatherfilesphotometry, check_fiberlocation
 export adjust_matfile, adjust_logfile

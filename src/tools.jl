@@ -32,6 +32,8 @@ function get_CAMmousedate(filepath, pattern)
     #and the second as extra experimental note, like target area
     date = Dates.Date(Dates.unix2datetime(ctime(filepath)))#return the date from file properties,
     #convert it from unix to normal time and take only the date
+    mouse = String(mouse)
+    note = String(mouse)
     return mouse, date, note
 end
 
@@ -48,6 +50,9 @@ function get_BHVmousedate(filepath)
     session = sessionREGEX.match;
     mouse, giorno = split(session,"_")[1:2]
     day = "20"*giorno
+    mouse = String(mouse)
+    day = String(day)
+    session = String(session)
     return mouse, day, session
 end
 

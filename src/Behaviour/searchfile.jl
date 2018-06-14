@@ -86,6 +86,7 @@ function get_sessionname(filepath, what::String)
             sessionname = piece
         end
     end
+    sessionname = String(sessionname)
     return sessionname
 end
 
@@ -151,8 +152,8 @@ function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_su
     camera[:Area] = Area
     file_components = Array{String}(size(camera,1),2)
     for i = 1:size(camera,1)
-        file_components[i,1] = split(camera[i,:Cam_Session], "_")[2]
-        file_components[i,2] = split(camera[i,:Cam_Session], "_")[3]
+        file_components[i,1] = String(split(camera[i,:Cam_Session], "_")[2])
+        file_components[i,2] = String(split(camera[i,:Cam_Session], "_")[3])
     end
     correct_date = Array{Date}(size(camera,1))
     dformat = Dates.DateFormat("yyyymmdd")
@@ -201,7 +202,7 @@ function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_su
         push!(provisory,replace(x,"a.csv",""))
     end
     DataIndex[:Exp_Path]= replace(Camera_path,"Cam/","")
-    DataIndex[:Exp_Name]=split(DataIndex[1,:Exp_Path],"/")[end-1]
+    DataIndex[:Exp_Name]=String(split(DataIndex[1,:Exp_Path],"/")[end-1])
     DataIndex[:Session] = provisory
     for x in[:Day2,:Day2_1]
         delete!(DataIndex, x)
