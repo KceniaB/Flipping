@@ -24,7 +24,7 @@ function process_pokes(bhv_files::String)
     mouse, day, session = get_BHVmousedate(bhv_files)
     curr_data[:PokeDur] = curr_data[:PokeOut]-curr_data[:PokeIn]
     curr_data[:MouseID] = mouse
-    curr_data[:Day] = day
+    curr_data[:Day] = parse(Int64,day)
     curr_data[:Session] = session
     try
         genotype = gen.(curr_data[:MouseID])
@@ -47,6 +47,7 @@ function process_pokes(bhv_files::String)
         curr_data[:Wall] = zeros(size(curr_data,1))
         curr_data[:Block] = get_sequence(curr_data,:Wall)
     end
+    convert2Bool(curr_data,[:Wall])
     curr_data[:BlockCount] = get_sequence(curr_data,:Streak_n,:Block,:Correct)
     curr_data[:ReverseStreak_n] = reverse(curr_data[:Streak_n])
     curr_data[:LastBlock] = get_last(curr_data,:Block)

@@ -30,3 +30,23 @@ function Base.unique(data::Array{Flipping.PhotometryStructure,1},column::Symbol,
     end
     result = unique(result)
 end
+
+function Base.maximum(data::Array{Flipping.PhotometryStructure,1},column::Symbol, field::Symbol)
+    result = []
+    for i=1:size(data,1)
+        session = getfield(data[i], field)
+        value = maximum(session[column])
+        push!(result,value)
+    end
+    result = maximum(result)
+end
+
+function Base.minimum(data::Array{Flipping.PhotometryStructure,1},column::Symbol, field::Symbol)
+    result = []
+    for i=1:size(data,1)
+        session = getfield(data[i], field)
+        value = minimum(session[column])
+        push!(result,value)
+    end
+    result = minimum(result)
+end
