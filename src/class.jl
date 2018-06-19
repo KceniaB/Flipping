@@ -50,3 +50,7 @@ function Base.minimum(data::Array{Flipping.PhotometryStructure,1},column::Symbol
     end
     result = minimum(result)
 end
+
+function Base.copy(data::Flipping.PhotometryStructure)
+    PhotometryStructure(copy(data.pokes,data.streaks,data.traces))
+end
