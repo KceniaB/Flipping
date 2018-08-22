@@ -19,6 +19,7 @@ using Reexport
 @reexport using StatsBase
 @reexport using FFTViews
 @reexport using DataArrays
+@reexport using JuliaDBMeta
 
 include("class.jl")
 include("tools.jl")
@@ -30,12 +31,12 @@ include(joinpath("Photometry","acquire_photo.jl"))
 include(joinpath("Photometry","tools_photo.jl"))
 
 
-export PhotometryStructure, verify_names, listvalues
+export PhotometryStructure, verify_names, listvalues, convertin_DB
 export process_pokes,process_streaks, concat_data!
 export get_FromStim, custom_bin
 export gatherfilesphotometry, check_fiberlocation
 export adjust_matfile, adjust_logfile
-export read_log, compress_analog, find_events, observe_pokes
+export read_log, compress_analog, find_events, observe_pokes,get_sequence
 export process_photo, add_streaks,ghost_buster
 export carica, create_processed_files, combine_PhotometryStructures
 

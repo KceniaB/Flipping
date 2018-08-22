@@ -70,8 +70,15 @@ function read_log(analog_filepath)
         if name == :timestamp
             analog[name] = collect(1:1:size(analog,1))
         else
-            analog[name] = cancelnoise(analog[name])
+             check = cancelnoise(analog[name])
+            if !isempty(find(check))
+                analog[name] = check
+            end
             inds = analog[name].<4.7
+            # risky approach to account for old datas
+            if size(inds,1) == size(analog,1)##
+                inds = analog[name].< 1.5*mean(analog[name])
+            end
             analog[inds,name] = 0
             analog[.!inds,name] = 1
             analog[name] = Bool.(analog[:,name])

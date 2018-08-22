@@ -19,6 +19,27 @@ function verify_names(data::Array{Flipping.PhotometryStructure,1},field::Symbol)
    return find(verify)
 end
 
+"""
+`convertin_DB`
+convert an Array of PhotometryStructure to a Indexed table
+"""
+function convertin_DB(data::Array{Flipping.PhotometryStructure},field::Symbol)
+    provisory = DataFrame()
+    for i = 1:size(data,1)
+        t = deepcopy(getfield(data[i],field))
+        if isempty(provisory)
+            provisory = t
+        else
+            append!(provisory,t)
+        end
+    end
+    converted = JuliaDB.table(provisory)
+    return converted
+end
+
+
+
+
 function Base.unique(data::Array{Flipping.PhotometryStructure,1},column::Symbol, field::Symbol)
     result = []
     for i=1:size(data,1)

@@ -63,6 +63,13 @@ function calc_F0(data::AbstractDataFrame,WHAT::Symbol,start = -100, finish = -50
     end
     return Fzeroes
 end
+function calc_F0(sar::Array{ShiftedArray}, NormW)
+    start = NormW[1]
+    stop = NormW[2]
+    corr_range = start:stop
+    v = mean(sar[corr_range])
+    return v
+end
 """
 `Normalise_F0`
 """
