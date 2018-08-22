@@ -13,7 +13,7 @@ it takes the path of a session file as argument and return a DataFrame of the se
 function process_pokes(bhv_files::String)
     curr_data= FileIO.load(bhv_files)|> DataFrame
     rename!(curr_data, Symbol("") => :Poke_n) #change poke counter name
-    curr_data[:Poke_n]= curr_data[:Poke_n]+1
+    curr_data[:Poke_n]= curr_data[:Poke_n].+1
     start_time = curr_data[1,:PokeIn]
     curr_data[:PokeIn] = curr_data[:PokeIn] .- start_time
     curr_data[:PokeOut] = curr_data[:PokeOut] .- start_time
@@ -22,6 +22,7 @@ function process_pokes(bhv_files::String)
     convert2Bool(curr_data,booleans)
     convert2Int(curr_data,integers)
     mouse, day, session = get_BHVmousedate(bhv_files)
+    curr_data[:Poke_h] = get_hierarchy(curr_data,:Reward)
     curr_data[:PokeDur] = curr_data[:PokeOut]-curr_data[:PokeIn]
     curr_data[:MouseID] = mouse
     curr_data[:Day] = parse(Int64,day)
@@ -113,6 +114,7 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
         dd = DataFrame(
         Num_pokes = size(df,1),
         Num_Rewards = length(find(df[:Reward].==1)),
+        Start_Reward = df[1,:Reward],
         Last_Reward = findlast(df[:Reward] .==1),
         Prev_Reward = findprev(df[:Reward] .==1, findlast(df[:Reward] .==1)-1),
         Trial_duration = (df[:PokeOut][end]-df[:PokeIn][1]),
@@ -147,11 +149,15 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
         frames = by(data, [:Session, :Streak_n,]) do df
             dd = DataFrame(
             In = df[1,:In],
-            Out = df[end,:Out]
+            Out = df[end,:Out],
+            LR_In = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:In],
+            LR_Out = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:Out]
             )
         end
         streak_table[:In] = frames[:In]
         streak_table[:Out] = frames[:Out]
+        streak_table[:LR_In] = frames[:LR_In]
+        streak_table[:LR_Out] = frames[:LR_Out]
     end
     return streak_table
 end

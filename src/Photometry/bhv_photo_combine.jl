@@ -2,19 +2,19 @@
 'check_accordance!'
 """
 function check_accordance!(bhv,events,analog_filepath,rec_type)
-    if size(bhv,1)!=size(events,1)
+    if size(bhv,1) != size(events,1)
         if size(bhv,1)/size(events,1)>1.5
             analog, events = adjust_logfile(analog_filepath; force = true)
             println("force 2 side poke reading")
             rec_type = true
         end
-        if size(bhv,1)>size(events,1)
+        if size(bhv,1) > size(events,1) # with ground fluctuation arduino signal fake pokes to python
             difference = size(bhv,1) - size(events,1)
             println("bhv pokes - events pokes = ", difference)
             short_pokes = ghost_buster(bhv,difference)
         end
-        if size(bhv,1)==size(events,1)
-         println("All good file adjusted")
+        if size(bhv,1) == size(events,1)
+            println("All good file adjusted")
         else
             println("Ops it didn't work")
             println("no solution found")
@@ -126,7 +126,7 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = tr
     structure = PhotometryStructure(bhv,streaks,essential);
     if onlystructure
         return structure
-    elseif !onlystructure
+    elseif !onlystructure # if you want take a look to the events dataframe mostly
         return structure, traces, events, bhv, streaks
     end
 end

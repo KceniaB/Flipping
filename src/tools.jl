@@ -315,28 +315,26 @@ First stim trial is 0;
 following non stim trial have negative values;
 following stim trials have positive values;
 """
-function get_FromStim(df,category::Symbol)
+function get_hierarchy(df,category::Symbol)
     if df[1,category]
         sequence = Int64[1]
         state = true
     elseif !df[1,category]
-        sequence = Int64[-100]
+        sequence = Int64[-1]
         state = false
     end
     for i = 2:size(df,1)
         if !state && !df[i,category] #if start false and current is false
-            push!(sequence, -100) #set a value to eliminate
+            push!(sequence, sequence[i-1] -1) #set a value to eliminate
         elseif !state && df[i,category] #if start false and current is true
-            push!(sequence, 0) #start counting
+            push!(sequence, 1) #start counting
             state = true
-        elseif state && !df[i,category] && df[i-1,category]#if current is false and different from before
+        elseif state && !df[i,category]#if current is false and different from before
             push!(sequence, -1)
-        elseif state && !df[i,category] && !df[i-1,category]#if current is false and egual from before
-            push!(sequence, sequence[i-1] - 1)
-        elseif state && df[i,category] && !df[i-1,category]#if current is true and different from before
-            push!(sequence, 0)
-        elseif state && df[i,category] && df[i-1,category]#if current is true and egual from before
+            state = false
+        elseif state && df[i,category]#if current is false and egual from before
             push!(sequence, sequence[i-1] + 1)
+            state = true
         end
     end
     return sequence

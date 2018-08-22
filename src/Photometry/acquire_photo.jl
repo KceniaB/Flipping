@@ -31,9 +31,11 @@ read the national board instrument log, cancel noise and return a DataFrame with
 the task info
 """
 function adjust_logfile(analog_filepath;conversion_rate=50,acquisition_rate=1000,force=false)
+    #rec type is true if protocol is signaled on the 3 channel
     analog, rec_type = read_log(analog_filepath)
     analog = compress_analog(analog,conversion_rate,acquisition_rate)
     if force
+        #few session hadn't protocol and reward signal but the L and R pokes where separeted
         rec_type = true
     end
     analog[:Frame] = collect(1:size(analog,1))

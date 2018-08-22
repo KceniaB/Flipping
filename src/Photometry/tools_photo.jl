@@ -43,8 +43,6 @@ function add_streaks(analog, events)
     return analog
 end
 
-
-
 """
 `calc_F0`
 """
