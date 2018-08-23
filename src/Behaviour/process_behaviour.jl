@@ -64,9 +64,9 @@ end
 
 Function that writes the single session poke file
 """
-function create_pokes_single_session(Directory_path::String, Exp_name::String,Mice_suffix::String)
+function process_pokes(Directory_path::String, Exp_type::String,Exp_name::String,Mice_suffix::String)
     rawdata_path = Directory_path*"run_task_photo/raw_data"
-    bhv = createfilelist(rawdata_path,Mice_suffix);
+    bhv = get_data(rawdata_path,Mice_suffix);
     behavior = paths_dataframe(bhv);
     c=0
     b=0
@@ -74,7 +74,7 @@ function create_pokes_single_session(Directory_path::String, Exp_name::String,Mi
     for i=1:size(behavior,1)
         path = behavior[i,:Bhv_Path]
         session = behavior[i,:Session]
-        filetosave=joinpath(Directory_path*"run_task_photo/"*Exp_name*"/Bhv/"*session)
+        filetosave = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/"*session)
         push!(Preprocessed_path,filetosave)
         if ~isfile(filetosave)
             data = process_pokes(path)
@@ -89,18 +89,6 @@ function create_pokes_single_session(Directory_path::String, Exp_name::String,Mi
     return behavior
 end
 
-"""
-`create_pokes_dataframe`
-
-join all the preprocessed pokes dataframe in a single dataframe
-"""
-function create_pokes_dataframe(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
-    behavior = create_pokes_single_session(Directory_path, Exp_name,Mice_suffix)
-    data = concat_data(behavior[:Preprocessed_Path])
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
-    FileIO.save(filetosave,data)
-    return data
-end
 
 """
 `process_streaks`
@@ -110,7 +98,9 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     columns_list = [:Side, :Stim, :Correct, :Condition, :Protocol, :Block,
         :LastBlock, :BlockCount, :ReverseStreak_n, :Wall, :ExpDay, :Area, :Gen];
     println("Missing Columns $(setdiff(columns_list, names(data)))")
-    streak_table = by(data, [ :Day, :MouseID, :Streak_n,]) do df
+    data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : contains.(data[:Reward],"true")
+    data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : contains.(data[:Stim],"true")
+    streak_table = by(data, [:Day, :MouseID, :Streak_n,]) do df
         dd = DataFrame(
         Num_pokes = size(df,1),
         Num_Rewards = length(find(df[:Reward].==1)),
@@ -160,4 +150,20 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
         streak_table[:LR_Out] = frames[:LR_Out]
     end
     return streak_table
+end
+
+"""
+`create_pokes_dataframe`
+
+join all the preprocessed pokes dataframe in a single dataframe and process streaks save it all
+"""
+function create_pokes_dataframe(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
+    DataIndex = process_pokes(Directory_path, Exp_type, Exp_name,Mice_suffix)
+    pokes = concat_data(DataIndex[:Preprocessed_Path])
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
+    FileIO.save(filetosave,pokes)
+    streaks = process_streaks(pokes)
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
+    FileIO.save(filetosave,streaks)
+    return pokes, DataIndex
 end

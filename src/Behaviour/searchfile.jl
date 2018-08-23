@@ -4,7 +4,7 @@ Create a Dataframe to store paths of files to preprocess
 """
 function paths_dataframe(bhv)
     behavior = DataFrame()
-    behavior[:Bhv_Path]= bhv
+    behavior[:Bhv_Path] = bhv[.!contains.(bhv,"txt")]
     ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
     MouseID = Array{String}(size(behavior,1))
     Day = Array{String}(size(behavior,1))

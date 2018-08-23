@@ -270,7 +270,6 @@ Append a series of dataframe if receives an arrays of paths
 
 function concat_data(v)
     a = FileIO.load(v[1]) |> DataFrame
-    #a = FileIO.load(v[1])|> DataFrame;
     for n in v[2:end]
         concat_data!(a, FileIO.load(n)|> DataFrame)
     end
