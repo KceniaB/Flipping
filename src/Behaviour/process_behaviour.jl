@@ -160,10 +160,14 @@ join all the preprocessed pokes dataframe in a single dataframe and process stre
 function create_pokes_dataframe(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
     DataIndex = process_pokes(Directory_path, Exp_type, Exp_name,Mice_suffix)
     pokes = concat_data(DataIndex[:Preprocessed_Path])
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
-    FileIO.save(filetosave,pokes)
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
+    @save filetosave pokes
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
+    # FileIO.save(filetosave,pokes)
     streaks = process_streaks(pokes)
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
-    FileIO.save(filetosave,streaks)
-    return pokes, DataIndex
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
+    @save filetosave streaks
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
+    # FileIO.save(filetosave,streaks)
+    return pokes, streaks, DataIndex
 end

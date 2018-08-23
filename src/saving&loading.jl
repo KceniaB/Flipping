@@ -35,7 +35,11 @@ and retunrs the variable stored
 """
 function carica(filename)
     file = FileIO.load(filename)
-    data = file[collect(keys(file))[1]]
+    if isa(file, Dict)
+        data = file[collect(keys(file))[1]]
+    else
+        data = FileIO.load(file) |> DataFrame
+    end
     data
 end
 """
