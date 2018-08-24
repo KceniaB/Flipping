@@ -33,6 +33,7 @@ function process_pokes(bhv_files::String)
     catch
         println("Missing genotype info ", session," ",curr_data[:MouseID],)
     end
+    curr_data[:Drug] = pharm.(curr_data[:Day])
     curr_data[:Protocol] = get_protocollo(curr_data)#create a columns with a unique string to distinguish protocols
     curr_data[:Streak_n] = get_sequence(curr_data,:Side)
     curr_data[:InterPoke] = 0.0
@@ -96,7 +97,7 @@ From the pokes dataframe creates one for streaks
 """
 function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     columns_list = [:Side, :Stim, :Correct, :Condition, :Protocol, :Block,
-        :LastBlock, :BlockCount, :ReverseStreak_n, :Wall, :ExpDay, :Area, :Gen];
+        :LastBlock, :BlockCount, :ReverseStreak_n, :Wall, :ExpDay, :Area, :Gen, :Drug];
     println("Missing Columns $(setdiff(columns_list, names(data)))")
     data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : contains.(data[:Reward],"true")
     data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : contains.(data[:Stim],"true")

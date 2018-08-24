@@ -256,6 +256,23 @@ function gen(str; dir = joinpath(dirname(@__DIR__), "genotypes"))
 end
 
 """
+`pharm`
+"""
+function pharm(str; dir = joinpath(dirname(@__DIR__), "pharmacology"))
+    drug = "missing"
+    for file in readdir(dir)
+        if endswith(file, ".csv")
+            df = FileIO.load(joinpath(dir, file)) |> DataFrame
+            n = names(df)[1]
+            if str in df[n]
+                drug = String(n)
+            end
+        end
+    end
+    return drug
+end
+
+"""
 `concat_data!`
 
 Adjust append in case Dataframes have different columns order
