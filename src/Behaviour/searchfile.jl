@@ -215,8 +215,8 @@ end
 
 look for a dataset where fiberlocation across day is stored
 """
-function check_fiberlocation(data,Directory_path,Exp_name)
-    filetofind=joinpath(Directory_path*"run_task_photo/"*Exp_name*"/FiberLocation"*".csv");
+function check_fiberlocation(data,Directory_path,Exp_name;run_path = "run_task_photo/")
+    filetofind=joinpath(Directory_path*run_path*Exp_name*"/FiberLocation.csv");
     if isfile(filetofind)
         fiberlocation = FileIO.load(filetofind) |>DataFrame;
         merged_data = join(data, fiberlocation, on = :Session, kind = :inner,makeunique=true);

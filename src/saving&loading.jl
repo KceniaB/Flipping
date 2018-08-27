@@ -51,9 +51,9 @@ saving::Bool
 datatype::String
     by default it assumes datas to be pokes specify otherwise
 """
-function combine_PhotometryStructures(Directory_path,Exp_name;saving = false)
+function combine_PhotometryStructures(Directory_path,Exp_name;saving = false,run_path = "run_task_photo/")
     Structure_pokes = Array{PhotometryStructure, 1}(0)
-    Structure_folder = Directory_path*"run_task_photo/"*Exp_name*"/Structures/"
+    Structure_folder = Directory_path*run_path*Exp_name*"/Structures/"
     Single_Structures_folder = Structure_folder*"single_session/"
     files = readdir(Single_Structures_folder)
     jls = contains.(files, ".jld2")

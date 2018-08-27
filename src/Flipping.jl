@@ -34,7 +34,7 @@ include(joinpath("Photometry","tools_photo.jl"))
 export PhotometryStructure, verify_names, listvalues, convertin_DB
 export process_pokes,process_streaks, concat_data!
 export get_hierarchy, custom_bin, pharm
-export get_data, create_pokes_dataframe, gatherfilesphotometry, check_fiberlocation
+export get_data, create_exp_dataframes, gatherfilesphotometry, check_fiberlocation
 export adjust_matfile, adjust_logfile
 export read_log, compress_analog, find_events, observe_pokes,get_sequence
 export process_photo, add_streaks,ghost_buster

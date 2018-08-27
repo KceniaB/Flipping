@@ -224,16 +224,16 @@ end
 look for a dataset where fiberlocation across day is stored
 """
 function check_fiberlocation(data,Exp_name)
-    filetofind=joinpath("/Users/dariosarra/Google Drive/Flipping/run_task_photo/"*Exp_name*"/FiberLocation"*".csv");
+    filetofind=joinpath("/Users/dariosarra/Google Drive/Flipping/run_task_photo/"*Exp_name*"/FiberLocation.csv");
     if isfile(filetofind)
         fiberlocation = FileIO.load(filetofind) |> DataFrame;
-        pokes_table = join(data, fiberlocation, on = :Session, kind = :inner,makeunique=true);
+        n_table = join(data, fiberlocation, on = :Session, kind = :inner,makeunique=true);
         println("found fibres location file, HAVE YOU UPDATED IT?")
     else
         println("no fibres location file")
-        pokes_table = data;
+        n_table = data;
     end
-    return pokes_table
+    return n_table
 end
 
 """
@@ -285,10 +285,14 @@ concat_data!(a, b) = append!(a, b[:, names(a)])
 Append a series of dataframe if receives an arrays of paths
 """
 
-function concat_data(v)
+function concat_data!(v)
     a = FileIO.load(v[1]) |> DataFrame
     for n in v[2:end]
-        concat_data!(a, FileIO.load(n)|> DataFrame)
+        try
+            concat_data!(a, FileIO.load(n)|> DataFrame)
+        catch
+            println( "Error session = ", n)
+        end
     end
     a
 end

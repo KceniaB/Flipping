@@ -29,7 +29,7 @@ function process_pokes(bhv_files::String)
     curr_data[:Session] = session
     try
         genotype = gen.(curr_data[:MouseID])
-        curr_data[:Gen]= genotype
+        curr_data[:Gen] = genotype
     catch
         println("Missing genotype info ", session," ",curr_data[:MouseID],)
     end
@@ -65,8 +65,8 @@ end
 
 Function that writes the single session poke file
 """
-function process_pokes(Directory_path::String, Exp_type::String,Exp_name::String,Mice_suffix::String)
-    rawdata_path = Directory_path*"run_task_photo/raw_data"
+function process_pokes(Directory_path::String, Exp_type::String,Exp_name::String,Mice_suffix::String;run_path = "run_task_photo/")
+    rawdata_path = Directory_path*run_path*"raw_data"
     bhv = get_data(rawdata_path,Mice_suffix);
     behavior = paths_dataframe(bhv);
     c=0
@@ -158,14 +158,16 @@ end
 
 join all the preprocessed pokes dataframe in a single dataframe and process streaks save it all
 """
-function create_pokes_dataframe(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
+function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
     DataIndex = process_pokes(Directory_path, Exp_type, Exp_name,Mice_suffix)
-    pokes = concat_data(DataIndex[:Preprocessed_Path])
+    pokes = concat_data!(DataIndex[:Preprocessed_Path])
+    pokes = check_fiberlocation(pokes,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
     @save filetosave pokes
     # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
     # FileIO.save(filetosave,pokes)
     streaks = process_streaks(pokes)
+    streaks = check_fiberlocation(streaks,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
     @save filetosave streaks
     # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
