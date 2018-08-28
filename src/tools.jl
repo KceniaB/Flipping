@@ -47,7 +47,12 @@ followed by the date
 """
 function get_BHVmousedate(filepath)
     sessionREGEX = match(r"[a-zA-Z]{2}\d+_\d{6}",filepath); #the result is a regex object with several info
-    session = sessionREGEX.match;
+    try
+        session = sessionREGEX.match;
+    catch
+        sessionREGEX = match(r"[a-zA-Z]{1}\d+_\d{6}",filepath);
+        session = sessionREGEX.match;
+    end
     mouse, giorno = split(session,"_")[1:2]
     day = "20"*giorno
     mouse = String(mouse)

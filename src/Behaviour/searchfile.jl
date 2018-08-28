@@ -4,17 +4,31 @@ Create a Dataframe to store paths of files to preprocess
 """
 function paths_dataframe(bhv)
     behavior = DataFrame()
-    behavior[:Bhv_Path] = bhv[.!contains.(bhv,"txt")]
+    # behavior[:Bhv_Path] = bhv[.!contains.(bhv,"txt")]
+    # ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
+    # MouseID = Array{String}(size(behavior,1))
+    # Day = Array{String}(size(behavior,1))
+    # Session = Array{String}(size(behavior,1))
+    # for i = collect(1:size(behavior,1))
+    #     MouseID[i], Day[i], Session[i] = get_BHVmousedate(behavior[i,:Bhv_Path])
+    # end
+    # behavior[:MouseID] = MouseID
+    # behavior[:Day] = Day#file properties are not reliable for the date of the session
+    # behavior[:Session] = Session.*".csv";
+    mask = contains.(bhv,"txt")
+    bhv = bhv[mask]
     ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
-    MouseID = Array{String}(size(behavior,1))
-    Day = Array{String}(size(behavior,1))
-    Session = Array{String}(size(behavior,1))
-    for i = collect(1:size(behavior,1))
-        MouseID[i], Day[i], Session[i] = get_BHVmousedate(behavior[i,:Bhv_Path])
+    MouseID = Array{String}(size(bhv,1))
+    Day = Array{String}(size(bhv,1))
+    Session = Array{String}(size(bhv,1))
+    for i = 1:size(bhv,1)
+        MouseID[i], Day[i], Session[i] = Flipping.get_BHVmousedate(bhv[i])
     end
-    behavior[:MouseID] = MouseID
-    behavior[:Day] = Day#file properties are not reliable for the date of the session
-    behavior[:Session] = Session.*".csv";
+    behavior = DataFrame(MouseID = MouseID)
+    behavior[:Day] = Day #file properties are not reliable for the date of the session
+    behavior[:Session] = Session.*".csv"
+    behavior[:Bhv_Path] = bhv
+
     return behavior
 end
 

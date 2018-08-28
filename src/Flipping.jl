@@ -17,7 +17,7 @@ using Reexport
 @reexport using DSP
 @reexport using Plots
 @reexport using StatsBase
-@reexport using FFTViews
+#@reexport using FFTViews
 @reexport using DataArrays
 @reexport using JuliaDBMeta
 
