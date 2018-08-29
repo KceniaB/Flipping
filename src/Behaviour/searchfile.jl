@@ -85,6 +85,18 @@ function get_data(dirnames, kind::Symbol)
     return get_data(dirnames, ext_dict[kind])
 end
 
+function get_data(Dir::String)
+    files = readdir(Dir)
+    bhv = []
+    for file in files
+        if ismatch(Regex(".csv"), file)
+            complete_filename = joinpath(Dir,file)
+            push!(bhv,complete_filename)
+        end
+    end
+    return bhv
+end
+
 """
 `get_sessionname(filepath, what::String)`
 

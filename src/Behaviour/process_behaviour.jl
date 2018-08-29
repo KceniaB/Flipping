@@ -3,6 +3,57 @@
 
 export process_pokes,create_pokes_dataframe, create_streak_dataframe
 
+"""
+`create_DataIndex`
+create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
+or takes all the files in a folder
+"""
+function create_DataIndex(bhv::Array{Any,1})
+    string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}",bhv)
+    mask = string_search.!= nothing
+    string_search = string_search[mask]
+    bhv = bhv[mask]
+    string_result = [res.match for res in string_search if res !== nothing]
+    DataIndex = DataFrame(Bhv_Path = bhv)
+    DataIndex[:Session] = String.(string_result.*".csv")
+    DataIndex[:MouseID] = String.([split(t,"_")[1] for t in DataIndex[:Session]])
+    DataIndex[:Day] = String.(["20"*split(t,"_")[2] for t in DataIndex[:Session]])
+    return DataIndex
+end
+
+
+
+"""
+`find_behavior`
+
+Function that deals with the type of preprocessing Single exp folder or raw data folder
+"""
+
+function find_behavior(Directory_path)
+    Dir = replace(Directory_path,basename(Directory_path),"")
+    saving_path = joinpath(Dir*"/Bhv/")
+    if !ispath(saving_path)
+        mkdir(saving_path)
+    end
+    bhv = get_data(Directory_path);
+    DataIndex = create_DataIndex(bhv);
+    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    return DataIndex
+end
+
+function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
+    rawdata_path = joinpath(Directory_path*"run_task_photo/raw_data")
+    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/")
+    if !ispath(saving_path)
+        mkdir(saving_path)
+    end
+    bhv = get_data(rawdata_path);
+    DataIndex = create_DataIndex(bhv);
+    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    return DataIndex
+end
+
+
 
 """
 `process_pokes`
@@ -59,24 +110,13 @@ function process_pokes(bhv_files::String)
     return curr_data
 end
 
-
-"""
-`create_pokes_single_session`
-
-Function that writes the single session poke file
-"""
-function process_pokes(Directory_path::String, Exp_type::String,Exp_name::String,Mice_suffix::String;run_path = "run_task_photo/")
-    rawdata_path = Directory_path*run_path*"raw_data"
-    bhv = get_data(rawdata_path,Mice_suffix);
-    behavior = paths_dataframe(bhv);
+function process_pokes(DataIndex::AbstractDataFrame)
     c=0
     b=0
-    Preprocessed_path = []; #to push a string is better to create an empty vector
-    for i=1:size(behavior,1)
-        path = behavior[i,:Bhv_Path]
-        session = behavior[i,:Session]
-        filetosave = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/"*session)
-        push!(Preprocessed_path,filetosave)
+    for i=1:size(DataIndex,1)
+        path = DataIndex[i,:Bhv_Path]
+        session = DataIndex[i,:Session]
+        filetosave = DataIndex[i,:Preprocessed_Path]
         if ~isfile(filetosave)
             data = process_pokes(path)
             FileIO.save(filetosave,data)
@@ -86,8 +126,7 @@ function process_pokes(Directory_path::String, Exp_type::String,Exp_name::String
         end
     end
     println("Existing file = ",c," Preprocessed = ",b)
-    behavior[:Preprocessed_Path] = Preprocessed_path;
-    return behavior
+    return DataIndex
 end
 
 
@@ -158,8 +197,36 @@ end
 
 join all the preprocessed pokes dataframe in a single dataframe and process streaks save it all
 """
-function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String,Mice_suffix::String)
-    DataIndex = process_pokes(Directory_path, Exp_type, Exp_name,Mice_suffix)
+function create_exp_dataframes(Raw_data_dir)
+    DataIndex = find_behavior(Raw_data_dir)
+    DataIndex = process_pokes(DataIndex)
+    pokes = concat_data!(DataIndex[:Preprocessed_Path])
+    #pokes = check_fiberlocation(pokes,Exp_name)
+    mask = contains.(String.(names(pokes)),"_1")
+    for x in[names(pokes)[mask]]
+        delete!(pokes, x)
+    end
+    save_dir = replace(Raw_data_dir,basename(Raw_data_dir),"")
+    filetosave = joinpath(save_dir,"pokes.jld2")
+    @save filetosave pokes
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
+    # FileIO.save(filetosave,pokes)
+    streaks = process_streaks(pokes)
+    #streaks = check_fiberlocation(streaks,Exp_name)
+    mask = contains.(String.(names(streaks)),"_1")
+    for x in[names(streaks)[mask]]
+        delete!(streaks, x)
+    end
+    filetosave = joinpath(save_dir,"streaks.jld2")
+    @save filetosave streaks
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".csv"
+    # FileIO.save(filetosave,streaks)
+    return pokes, streaks, DataIndex
+end
+
+function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String, Mice_suffix::String)
+    DataIndex = find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
+    DataIndex = process_pokes(DataIndex)
     pokes = concat_data!(DataIndex[:Preprocessed_Path])
     pokes = check_fiberlocation(pokes,Exp_name)
     mask = contains.(String.(names(pokes)),"_1")
