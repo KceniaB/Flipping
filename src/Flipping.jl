@@ -3,6 +3,7 @@ module Flipping
 using Reexport
 #using Preprocess
 #using ProcessPhotometry
+#@reexport using FFTViews
 @reexport using Reexport
 @reexport using DataFrames
 @reexport using MAT
@@ -17,7 +18,6 @@ using Reexport
 @reexport using DSP
 @reexport using Plots
 @reexport using StatsBase
-#@reexport using FFTViews
 @reexport using DataArrays
 @reexport using JuliaDBMeta
 

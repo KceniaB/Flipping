@@ -46,7 +46,7 @@ end
 """
 `calc_F0`
 """
-function calc_F0(data::AbstractDataFrame,WHAT::Symbol,start = -100, finish = -50)
+function calc_F0(data::DataFrames.AbstractDataFrame,WHAT::Symbol,start = -100, finish = -50)
     Fzeroes=[]
     for trials = 1:size(data,1)
         if data[trials,WHAT].shifts[1] == 0
@@ -71,7 +71,7 @@ end
 """
 `Normalise_F0`
 """
-function  Normalise_F0(data::AbstractDataFrame,WHAT::Symbol;start = -100, finish = -50)
+function  Normalise_F0(data::DataFrames.AbstractDataFrame,WHAT::Symbol;start = -100, finish = -50)
     F0_norm =  Array{ShiftedArrays.ShiftedArray{Float64,Missings.Missing,1,Array{Float64,1}}}(size(data,1))
     Fzeroes = calc_F0(data,WHAT,start,finish)
     for i = 1:size(data,1)
@@ -91,7 +91,7 @@ end
 """
 `Normalise_GLM`
 """
-function  Normalise_GLM(data::AbstractDataFrame,signal::Symbol,regressor::Symbol)
+function  Normalise_GLM(data::DataFrames.AbstractDataFrame,signal::Symbol,regressor::Symbol)
     prov = DataFrame()
     sig_vector = Union{Float64,Missing}[]
     ref_vector = Union{Float64,Missing}[]
@@ -118,7 +118,7 @@ end
 """
 `Normalise_Reg`
 """
-function  Normalise_Reg(data::AbstractDataFrame,WHAT::Symbol)
+function  Normalise_Reg(data::DataFrames.AbstractDataFrame,WHAT::Symbol)
     col_sig = WHAT
     col_ref = Symbol(replace(String(WHAT),"sig","ref"))
     sig_shifted = Normalise_F0(data,col_sig)

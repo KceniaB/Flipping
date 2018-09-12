@@ -24,19 +24,30 @@ end
 convert an Array of PhotometryStructure to a Indexed table
 """
 function convertin_DB(data::Array{Flipping.PhotometryStructure},field::Symbol)
-    provisory = DataFrame()
+    provisory = []
     for i = 1:size(data,1)
-        t = deepcopy(getfield(data[i],field))
+        ongoing = JuliaDB.table(getfield(data[i],field))
         if isempty(provisory)
-            provisory = t
+            provisory = ongoing
         else
-            append!(provisory,t)
+            provisory = merge(provisory,ongoing)
         end
     end
-    converted = JuliaDB.table(provisory)
-    return converted
+    return provisory
 end
-
+#= old version convertin_DB
+provisory = DataFrame()
+for i = 1:size(data,1)
+    t = deepcopy(getfield(data[i],field))
+    if isempty(provisory)
+        provisory = t
+    else
+        append!(provisory,t)
+    end
+end
+converted = JuliaDB.table(provisory)
+return converted
+=#
 
 
 

@@ -110,7 +110,7 @@ function process_pokes(bhv_files::String)
     return curr_data
 end
 
-function process_pokes(DataIndex::AbstractDataFrame)
+function process_pokes(DataIndex::DataFrames.AbstractDataFrame)
     c=0
     b=0
     for i=1:size(DataIndex,1)
