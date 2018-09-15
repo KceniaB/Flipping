@@ -116,6 +116,8 @@ function events_buster(events,bhv)
         end
     else
         println("number of streaks is incorrect")
+        println( "size event streak = $(maximum(events[:Streak_n])), size bhv streaks = $(maximum(bhv[:Streak_n]))")
+        return nothing
     end
     return incorrect
 end
