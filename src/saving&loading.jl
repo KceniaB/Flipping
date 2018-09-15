@@ -62,16 +62,21 @@ datatype::String
 function combine_PhotometryStructures(Directory_path,Exp_name;saving = false,run_path = "run_task_photo/")
     Structure_pokes = Array{PhotometryStructure, 1}(0)
     Structure_folder = Directory_path*run_path*Exp_name*"/Structures/"
-    Single_Structures_folder = Structure_folder*"single_session/"
+    Single_Structures_folder = joinpath(Structure_folder,"single_session")
     files = readdir(Single_Structures_folder)
     jls = contains.(files, ".jld2")
     files = files[jls]
     for file in files
-        structure = carica(Single_Structures_folder*file)
+        structure = carica(joinpath(Single_Structures_folder,file))
         push!(Structure_pokes,structure)
     end
     if saving
-        struct_file = Structure_folder*"Struct_"*Exp_name*".jld2"
+        saving_folder = joinpath(Directory_path,"Datasets","Photometry",Exp_name)
+        if !ispath(saving_folder)
+            mkdir(saving_folder)
+        end
+        filename = "Struct_"*Exp_name*".jld2"
+        struct_file = joinpath(saving_folder,filename)
         @save struct_file Structure_pokes
     end
     return Structure_pokes
