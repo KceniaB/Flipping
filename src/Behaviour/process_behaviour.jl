@@ -8,7 +8,7 @@ export process_pokes,create_pokes_dataframe, create_streak_dataframe
 create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
 or takes all the files in a folder
 """
-function create_DataIndex(bhv::Array{Any,1})
+function create_DataIndex(bhv)
     string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}",bhv)
     mask = string_search.!= nothing
     string_search = string_search[mask]
@@ -45,9 +45,12 @@ function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String
     rawdata_path = joinpath(Directory_path*"run_task_photo/raw_data")
     saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/")
     if !ispath(saving_path)
+        if !ispath(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
+            mkdir(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
+        end
         mkdir(saving_path)
     end
-    bhv = get_data(rawdata_path);
+    bhv = get_data(rawdata_path, Mice_suffix);
     DataIndex = create_DataIndex(bhv);
     DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
     return DataIndex
@@ -64,7 +67,7 @@ it takes the path of a session file as argument and return a DataFrame of the se
 function process_pokes(bhv_files::String)
     curr_data= FileIO.load(bhv_files)|> DataFrame
     rename!(curr_data, Symbol("") => :Poke_n) #change poke counter name
-    curr_data[:Poke_n]= curr_data[:Poke_n].+1
+    curr_data[:Poke_n] = curr_data[:Poke_n].+1
     start_time = curr_data[1,:PokeIn]
     curr_data[:PokeIn] = curr_data[:PokeIn] .- start_time
     curr_data[:PokeOut] = curr_data[:PokeOut] .- start_time

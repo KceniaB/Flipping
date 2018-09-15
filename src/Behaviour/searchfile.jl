@@ -58,7 +58,7 @@ in the second way use a symbol to refer to a dictionary and find the specified s
 #Method 1 inputs a directory and a string
 function get_data(dirnames,what::String)
     location = String[] #array to load with all the paths corrisponding to researched file type
-    if eltype(dirnames)== Char #in case only one folder is loaded the for loop would research in single character
+    if eltype(dirnames) == Char #in case only one folder is loaded the for loop would research in single character
         tool = String[]
         push!(tool,dirnames)
         dirnames = tool
@@ -66,7 +66,7 @@ function get_data(dirnames,what::String)
     for dirname in dirnames
         files = readdir(dirname)
         for file in files
-            if ismatch(Regex(what), file)
+            if ismatch(Regex(what), file) && !ismatch(Regex("a.txt"), file)
                 complete_filename = joinpath(dirname,file)
                 push!(location,complete_filename)
             end

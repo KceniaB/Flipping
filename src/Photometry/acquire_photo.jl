@@ -53,7 +53,7 @@ function cancelnoise(analogs)
     analogs[1:firststep] = 0
     return analogs
 end
-##
+
 """
 `read_log`
 remove noise from the analog traces
@@ -131,11 +131,34 @@ function find_events(squarewave,which)
 end
 
 """
+`check_burst`
+in some session a current registred simultaneous pokes left and right
+"""
+function check_burst(analog)
+    checksame = analog[:R_p] + analog[:L_p];
+    if any(checksame .== 2)
+        burst = checksame .> 1
+        burst_in = find_events(burst,:in)
+        burst_out = find_events(burst,:out)
+        Tocancel = DataFrame(in = burst_in,out = burst_out)
+        println("found $(size(Tocancel,1)) overlapping events")
+        for i = 1:size(Tocancel,1)
+            interval = Tocancel[i,:in]:Tocancel[i,:out]
+            analog[interval,:] = 0
+        end
+    end
+    return analog
+end
+
+"""
 `observe_pokes`
 identify all the pokes in and out and return a dataframe with the ordered index
 of every poke and their side
 """
 function observe_pokes(analog,conversion_rate,rec_type::Bool)
+    if rec_type
+        analog = check_burst(analog)
+    end
     R_in= find_events(analog[:R_p],:in)
     R_out = find_events(analog[:R_p],:out)
     events = DataFrame()

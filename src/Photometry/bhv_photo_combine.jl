@@ -13,6 +13,11 @@ function check_accordance!(bhv,events,analog_filepath,rec_type)
             println("bhv pokes - events pokes = ", difference)
             short_pokes = ghost_buster(bhv,difference)
         end
+        if size(bhv,1) < size(events,1)
+            difference = size(events,1) - size(bhv,1)
+            println("events pokes - bhv pokes = ", difference)
+            short_pokes = events_buster(events,bhv)
+        end
         if size(bhv,1) == size(events,1)
             println("All good file adjusted")
         else
@@ -84,6 +89,36 @@ function ghost_buster(bhv,difference;dur_threshold = 0.1019999999999)
     println("Replaced Pokes:", targets)
     return(targets)
 end
+
+function events_buster(events,bhv)
+    if maximum(bhv[:Streak_n]) == maximum(events[:Streak_n])
+        println("number of streaks is correct")
+        incorrect = []
+        for i = 1:maximum(bhv[:Streak_n])
+            ongoing_ev = events[events[:Streak_n].==i,:]
+            ongoing_bhv = bhv[bhv[:Streak_n].==i,:]
+            if size(ongoing_ev,1) != size(ongoing_bhv,1)
+                difference = size(ongoing_ev,1) - size(ongoing_bhv,1)
+                println("streak_n $(i) has $(difference) more pokes")
+                wrongpokes = find(ongoing_ev[:PokeDur] .== minimum(ongoing_ev[:PokeDur]))
+                push!(incorrect,wrongpokes)
+                for w in wrongpokes
+                    w_P = ongoing_ev[w,:Poke_n]
+                    w_P_idx = find(events[:Poke_n].== w_P)
+                    for x in [:Out,:Out_t]
+                        events[w_P_idx,x] = events[w_P_idx+1,x]
+                    end
+                    events[w_P_idx,:PokeDur] = events[w_P_idx,:PokeDur] + events[w_P_idx+1,:PokeDur]
+                end
+                deleterows!(events, wrongpokes.+1)
+                events[:Poke_n] = collect(1:size(events,1))
+            end
+        end
+    else
+        println("number of streaks is incorrect")
+    end
+    return incorrect
+end
 """
 `process_photo`
 It requires a DataIndex table and the raw to process
@@ -103,7 +138,7 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = tr
     #rec_type is true if rewards were tracked
     analog, events, rec_type = adjust_logfile(analog_filepath,conversion_rate =fps, acquisition_rate =NiDaq_rate);
     bhv = process_pokes(raw_path);
-    # some file recorded separetely Left and Righe Pokes
+    # some file recorded separetely Left and Right Pokes
     # but not the other task info, so check check_accordance
     # updates rectype
     check_accordance!(bhv,events,analog_filepath,rec_type)

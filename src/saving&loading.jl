@@ -14,8 +14,16 @@ function create_processed_files(DataIndex;saving = true)
         # trace_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Trace_"*DataIndex[idx,:Session]*".csv"
         # events_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Events_"*DataIndex[idx,:Session]*".csv"
         # bhv_file = DataIndex[idx,:Exp_Path]*"Bhv/"*DataIndex[idx,:Session]*".csv"
-         struct_file = DataIndex[idx,:Exp_Path]*"Structures/single_session/"*"Struct"DataIndex[idx,:Session]*".jld2"
         if saving
+            if !ispath(joinpath(DataIndex[idx,:Exp_Path],"Structures"))
+                mkdir(joinpath(DataIndex[idx,:Exp_Path],"Structures"))
+            end
+            saving_path = DataIndex[idx,:Exp_Path]*"Structures/single_session/"
+            if !ispath(saving_path)
+                mkdir(saving_path)
+            end
+            ongoing_session = "Struct"DataIndex[idx,:Session]*".jld2"
+            struct_file = joinpath(saving_path,ongoing_session)
             # FileIO.save(trace_file,trace)
             # FileIO.save(events_file,events)
             # FileIO.save(bhv_file,bhv)
