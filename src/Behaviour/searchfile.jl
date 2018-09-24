@@ -186,7 +186,7 @@ function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_su
     for i = 1:size(camera,1)
         try
             correct_date[i]= Date(file_components[i,2],dformat)
-        catch
+        catch;
             correct_date[i] = Date(file_components[i,1],dformat)
         end
     end
