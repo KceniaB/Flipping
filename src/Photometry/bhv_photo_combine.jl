@@ -121,6 +121,34 @@ function events_buster(events,bhv)
     end
     return incorrect
 end
+
+"""
+`sliding_f0`
+"""
+
+function sliding_f0(traces::AbstractDataFrame,ongoing_trace::Symbol,norm_range::Range) # return one ShiftedArray
+    ongoing = traces[ongoing_trace]
+    sliding_f0(ongoing,norm_range)
+end
+
+function sliding_f0(ongoing_trace::Vector,norm_range::Range) #return one normalised vector
+    sliding_start = - (norm_range.start + norm_range.stop)
+    transformed_trace = repmat([0.0],sliding_start)
+    for i = sliding_start+1:size(ongoing_trace,1)
+        interval_stop = i + norm_range.stop
+        interval_start =  interval_stop + norm_range.start
+        interval_range = interval_start:interval_stop
+        ongoing_interval = ongoing_trace[interval_range]
+        mask = ongoing_interval.<median(ongoing_interval)
+        ongoing_f0 = mean(ongoing_interval[mask])
+        normalised_value = (ongoing_trace[i] - ongoing_f0)/ongoing_f0
+        push!(transformed_trace,normalised_value)
+    end
+    return transformed_trace
+end
+
+
+
 """
 `process_photo`
 It requires a DataIndex table and the raw to process
@@ -153,10 +181,15 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = tr
     #extended trace info
     trace = join(cam,analog,on=:Frame);
     #essential traces only Pokes signals and references
-    Cols = trace.colindex.names;
+    Cols = names(trace);
     Columns = string.(Cols);
     result = Columns[contains.(Columns,"_sig").|contains.(Columns,"_ref")]
-    push!(result,"Pokes")
+    norm_range = -11*fps:-1*fps
+    for x in result
+        new_col = "sn_"*x
+        trace[Symbol(new_col)] = sliding_f0(trace[Symbol(x)],norm_range)
+    end
+    result = vcat(result,["sn_"*x for x in result],["Pokes"])
     essential = trace[:,Symbol.(result)]
     bhv = join(bhv,events[:,[:Poke_n,:In,:Out]], on = :Poke_n)
     streaks = process_streaks(bhv; photometry = true)
