@@ -130,25 +130,6 @@ function find_events(squarewave,which)
     return indexes
 end
 
-"""
-`check_burst`
-in some session a current registred simultaneous pokes left and right
-"""
-function check_burst(analog)
-    checksame = analog[:R_p] + analog[:L_p];
-    if any(checksame .== 2)
-        burst = checksame .> 1
-        burst_in = find_events(burst,:in)
-        burst_out = find_events(burst,:out)
-        Tocancel = DataFrame(in = burst_in,out = burst_out)
-        println("found $(size(Tocancel,1)) overlapping events")
-        for i = 1:size(Tocancel,1)
-            interval = Tocancel[i,:in]:Tocancel[i,:out]
-            analog[interval,:] = 0
-        end
-    end
-    return analog
-end
 
 """
 `observe_pokes`
@@ -186,4 +167,25 @@ function observe_pokes(analog,conversion_rate,rec_type::Bool)
         dd[:InterPoke] = get_shifteddifference(dd,:In_t,:Out_t)
     end
     return events
+end
+
+
+"""
+`check_burst`
+in some session a current registred simultaneous pokes left and right
+"""
+function check_burst(analog)
+    checksame = analog[:R_p] + analog[:L_p];
+    if any(checksame .== 2)
+        burst = checksame .> 1
+        burst_in = find_events(burst,:in)
+        burst_out = find_events(burst,:out)
+        Tocancel = DataFrame(in = burst_in,out = burst_out)
+        println("found $(size(Tocancel,1)) overlapping events")
+        for i = 1:size(Tocancel,1)
+            interval = Tocancel[i,:in]:Tocancel[i,:out]
+            analog[interval,[:R_p,:L_p]] = 0.0
+        end
+    end
+    return analog
 end

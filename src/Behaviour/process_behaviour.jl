@@ -241,7 +241,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".csv"
     # FileIO.save(filetosave,pokes)
     streaks = process_streaks(pokes)
-    streaks = check_fiberlocation(streaks,Exp_name)
+    streaks = check_fiberlocation(streaks,Directory_path,Exp_name)
     mask = contains.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)

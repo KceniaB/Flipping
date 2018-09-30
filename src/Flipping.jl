@@ -36,7 +36,7 @@ export process_pokes,process_streaks, concat_data!
 export get_hierarchy, custom_bin, pharm
 export get_data, create_DataIndex, create_exp_dataframes, gatherfilesphotometry, check_fiberlocation
 export adjust_matfile, adjust_logfile
-export read_log, compress_analog, find_events, observe_pokes,get_sequence
+export read_log, compress_analog, find_events, observe_pokes,check_burst,get_sequence
 export process_photo, add_streaks,ghost_buster
 export carica, create_processed_files, combine_PhotometryStructures
 
