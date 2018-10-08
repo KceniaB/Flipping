@@ -22,7 +22,7 @@ function create_processed_files(DataIndex;saving = true)
             if !ispath(saving_path)
                 mkdir(saving_path)
             end
-            ongoing_session = "Struct"DataIndex[idx,:Session]*".jld2"
+            ongoing_session = "Struct"*DataIndex[idx,:Session]*".jld2"
             struct_file = joinpath(saving_path,ongoing_session)
             # FileIO.save(trace_file,trace)
             # FileIO.save(events_file,events)
@@ -46,9 +46,9 @@ function carica(filename)
     if isa(file, Dict)
         data = file[collect(keys(file))[1]]
     else
-        data = FileIO.load(file) |> DataFrame
+        data = FileIO.load(filename) |> DataFrame
     end
-    data
+    return data
 end
 """
 'combine_PhotometryStructures'

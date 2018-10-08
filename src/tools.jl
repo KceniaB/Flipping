@@ -217,7 +217,7 @@ end
 function get_shifteddifference(df,second::Symbol,first::Symbol)
     difference = df[second][2:end] - df[first][1:end-1];
     #unshift!(difference,0)#place a 0 at the first element because there is no precedent value to be subtracted
-    push!(difference,0)
+    unshift!(difference,0.0)
     return difference
 end
 #Method2 set 2 zero according to the reset of another counter
@@ -367,5 +367,7 @@ function get_hierarchy(df,category::Symbol)
             state = true
         end
     end
+    unshift!(sequence,0)
+    pop!(sequence)
     return sequence
 end

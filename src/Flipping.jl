@@ -20,6 +20,7 @@ using Reexport
 @reexport using StatsBase
 @reexport using DataArrays
 @reexport using JuliaDBMeta
+@reexport using NaNMath
 
 include("class.jl")
 include("tools.jl")

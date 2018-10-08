@@ -76,7 +76,6 @@ function process_pokes(bhv_files::String)
     convert2Bool(curr_data,booleans)
     convert2Int(curr_data,integers)
     mouse, day, session = get_BHVmousedate(bhv_files)
-    curr_data[:Poke_h] = get_hierarchy(curr_data,:Reward)
     curr_data[:PokeDur] = curr_data[:PokeOut]-curr_data[:PokeIn]
     curr_data[:MouseID] = mouse
     curr_data[:Day] = parse(Int64,day)
@@ -91,8 +90,10 @@ function process_pokes(bhv_files::String)
     curr_data[:Protocol] = get_protocollo(curr_data)#create a columns with a unique string to distinguish protocols
     curr_data[:Streak_n] = get_sequence(curr_data,:Side)
     curr_data[:InterPoke] = 0.0
+    curr_data[:Poke_h] = 0
     by(curr_data,:Streak_n) do dd
         dd[:InterPoke] = get_shifteddifference(dd,:PokeIn,:PokeOut)
+        dd[:Poke_h] = get_hierarchy(dd,:Reward)
     end
     curr_data[:StreakStart] = get_streakstart(curr_data)
     curr_data[:StreakCount]=get_sequence(curr_data,:Poke_n,:Streak_n)
