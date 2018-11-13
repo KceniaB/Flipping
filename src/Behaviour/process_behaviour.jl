@@ -93,7 +93,7 @@ function process_pokes(bhv_files::String)
     curr_data[:Poke_h] = 0
     by(curr_data,:Streak_n) do dd
         dd[:InterPoke] = get_shifteddifference(dd,:PokeIn,:PokeOut)
-        dd[:Poke_h] = get_hierarchy(dd,:Reward)
+        dd[:Poke_h] = get_hierarchy(dd[:Reward])
     end
     curr_data[:StreakStart] = get_streakstart(curr_data)
     curr_data[:StreakCount]=get_sequence(curr_data,:Poke_n,:Streak_n)
