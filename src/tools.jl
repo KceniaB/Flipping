@@ -375,5 +375,9 @@ end
 
 function get_hierarchy(df,category::Symbol)
     get_hierarchy(df[category])
+end
 
+function get_hierarchy(df::BitArray{1})
+    modified = [Bool(i) for i in df]
+    get_hierarchy(modified)
 end
