@@ -44,6 +44,32 @@ function add_streaks(analog, events)
 end
 
 """
+`sliding_f0`
+"""
+
+function sliding_f0(traces::AbstractDataFrame,ongoing_trace::Symbol,norm_range::Range) # return one ShiftedArray
+    ongoing = traces[ongoing_trace]
+    sliding_f0(ongoing,norm_range)
+end
+
+function sliding_f0(ongoing_trace::Vector,norm_range::Range) #return one normalised vector
+    sliding_start = - (norm_range.start + norm_range.stop)
+    transformed_trace = repmat([0.0],sliding_start)
+    for i = sliding_start+1:size(ongoing_trace,1)
+        interval_stop = i + norm_range.stop
+        interval_start =  interval_stop + norm_range.start
+        interval_range = interval_start:interval_stop
+        ongoing_interval = ongoing_trace[interval_range]
+        mask = ongoing_interval.<median(ongoing_interval)
+        ongoing_f0 = mean(ongoing_interval[mask])
+        normalised_value = (ongoing_trace[i] - ongoing_f0)/ongoing_f0
+        push!(transformed_trace,normalised_value)
+    end
+    return transformed_trace
+end
+
+
+"""
 `calc_F0`
 """
 function calc_F0(data::DataFrames.AbstractDataFrame,WHAT::Symbol,start = -100, finish = -50)

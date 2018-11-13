@@ -247,12 +247,13 @@ function check_fiberlocation(data,Directory_path,Exp_name;run_path = "run_task_p
         fiberlocation = FileIO.load(filetofind) |>DataFrame;
         merged_data = join(data, fiberlocation, on = :Session, kind = :inner,makeunique=true);
         println("found fibres location file, HAVE YOU UPDATED IT?")
+        for x in [:MouseID_1,:Day_1,:Area_1]
+            delete!(merged_data, x)
+        end
     else
         println("no fibres location file")
         merged_data = data;
     end
-    for x in [:MouseID_1,:Day_1,:Area_1]
-        delete!(merged_data, x)
-    end
+
     return merged_data
 end

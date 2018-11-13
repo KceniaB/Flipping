@@ -345,29 +345,58 @@ First stim trial is 0;
 following non stim trial have negative values;
 following stim trials have positive values;
 """
-function get_hierarchy(df,category::Symbol)
-    if df[1,category]
+
+function get_hierarchy(vector::Array{Bool,1})
+    if vector[1]
         sequence = Int64[1]
         state = true
-    elseif !df[1,category]
+    elseif !vector[1]
         sequence = Int64[-1]
         state = false
     end
-    for i = 2:size(df,1)
-        if !state && !df[i,category] #if start false and current is false
+    for i = 2:size(vector,1)
+        if !state && !vector[i] #if start false and current is false
             push!(sequence, sequence[i-1] -1) #set a value to eliminate
-        elseif !state && df[i,category] #if start false and current is true
+        elseif !state && vector[i] #if start false and current is true
             push!(sequence, 1) #start counting
             state = true
-        elseif state && !df[i,category]#if current is false and different from before
+        elseif state && !vector[i]#if current is false and different from before
             push!(sequence, -1)
             state = false
-        elseif state && df[i,category]#if current is false and egual from before
+        elseif state && vector[i]#if current is false and egual from before
             push!(sequence, sequence[i-1] + 1)
             state = true
         end
     end
-    unshift!(sequence,0)
+    sequence = vcat([NaN],sequence)
     pop!(sequence)
     return sequence
 end
+
+# function get_hierarchy(df,category::Symbol)
+#
+#     if df[1,category]
+#         sequence = Int64[1]
+#         state = true
+#     elseif !df[1,category]
+#         sequence = Int64[-1]
+#         state = false
+#     end
+#     for i = 2:size(df,1)
+#         if !state && !df[i,category] #if start false and current is false
+#             push!(sequence, sequence[i-1] -1) #set a value to eliminate
+#         elseif !state && df[i,category] #if start false and current is true
+#             push!(sequence, 1) #start counting
+#             state = true
+#         elseif state && !df[i,category]#if current is false and different from before
+#             push!(sequence, -1)
+#             state = false
+#         elseif state && df[i,category]#if current is false and egual from before
+#             push!(sequence, sequence[i-1] + 1)
+#             state = true
+#         end
+#     end
+#     unshift!(sequence,NaN)
+#     pop!(sequence)
+#     return sequence
+# end

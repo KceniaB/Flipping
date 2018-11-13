@@ -26,6 +26,21 @@ end
 ##
 
 """
+`erase_bumps`
+use a derivative to correct unnatural change of signal due to fibre move
+"""
+
+function erase_bumps(vec::Array{Float64,1}; error = 3, grade = 1, start = 1)
+    diff = vec - lag(vec,grade,default = NaN)
+    lim0 = -error*NaNMath.std(diff[start:end])
+    lim1 = error*NaNMath.std(diff[start:end])
+    diff_filtered = [lim0 < val < lim1 ? val : 0.0 for val in diff]
+    vec_smooth = cumsum(diff_filtered)
+    vec_smooth = vec_smooth .+ mean(vec) .- mean(vec_smooth)
+    return vec_smooth
+end
+
+"""
 'adjust_logfile'
 read the national board instrument log, cancel noise and return a DataFrame with
 the task info
