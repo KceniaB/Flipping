@@ -90,13 +90,13 @@ function process_pokes(bhv_files::String)
     curr_data[:Protocol] = get_protocollo(curr_data)#create a columns with a unique string to distinguish protocols
     curr_data[:Streak_n] = get_sequence(curr_data,:Side)
     curr_data[:InterPoke] = 0.0
-    curr_data[:Poke_h] = 0
+    curr_data[:Poke_h] = 0.0
     by(curr_data,:Streak_n) do dd
         dd[:InterPoke] = get_shifteddifference(dd,:PokeIn,:PokeOut)
         dd[:Poke_h] = get_hierarchy(dd[:Reward])
     end
     curr_data[:StreakStart] = get_streakstart(curr_data)
-    curr_data[:StreakCount]=get_sequence(curr_data,:Poke_n,:Streak_n)
+    curr_data[:StreakCount]= get_sequence(curr_data,:Poke_n,:Streak_n)
     curr_data[:Correct] = get_correct(curr_data)
     try
         curr_data[:Block] = get_sequence(curr_data,:Wall) #enumerates the blocks
