@@ -355,3 +355,60 @@ function nextcount(count::T, rewarded) where {T <: Number}
 end
 signedcount(v::AbstractArray{Bool}) = accumulate(nextcount, 0.0, v)
 get_hierarchy(v) = lag(signedcount(v), default = NaN)
+
+"""
+"count_series"
+useful to count an ordered series of categorical values, wheter they are the same or
+they change
+"""
+function count_trues(count::T, same) where {T <: Number}
+    if same
+        count+1
+    else
+        1
+    end
+end
+
+function check_series(x)
+    Vector = [false]
+    for i = 2:size(x,1)
+        push!(Vector,x[i] == x[i-1] ? true : false)
+    end
+    return Vector
+end
+
+function count_series(vector)
+    x = check_series(vector)
+    res = accumulate(count_trues,0,x)
+    return res
+end
+
+"""
+`create_exp_calendar`
+Method1: recount days of experiment
+Method2: recount days according to changes in a manipulation
+days is a Symbol  for the column that stores the actual days
+"""
+function create_exp_calendar(df::AbstractDataFrame,days::Symbol)
+    lista = sort!(union(df[days]))
+    Exp_day = Array{Int64,1}()
+    Day = []
+    for (n,d) in enumerate(lista)
+        push!(Exp_day,Int64(n))
+        push!(Day,d)
+    end
+    x = DataFrame(Exp_Day = Exp_day)
+    x[days] = Day
+    return x
+end
+
+function create_exp_calendar(df::AbstractDataFrame,days::Symbol,manipulation::Symbol)
+    x = by(df,days) do dd
+        DataFrame(manipulation_state = union(dd[manipulation]))
+    end
+    what = string(manipulation)
+    new_name = Symbol(what*"_Day")
+    x[new_name] = count_series(x[:manipulation_state])
+    delete!(x,:manipulation_state)
+    return x
+end
