@@ -80,12 +80,7 @@ function process_pokes(bhv_files::String)
     curr_data[:MouseID] = mouse
     curr_data[:Day] = parse(Int64,day)
     curr_data[:Session] = session
-    try
-        genotype = gen.(curr_data[:MouseID])
-        curr_data[:Gen] = genotype
-    catch
-        println("Missing genotype info ", session," ",curr_data[:MouseID],)
-    end
+    curr_data[:Gen] = gen.(curr_data[:MouseID])
     curr_data[:Drug] = pharm.(curr_data[:Day])
     curr_data[:Protocol] = get_protocollo(curr_data)#create a columns with a unique string to distinguish protocols
     curr_data[:Streak_n] = get_sequence(curr_data,:Side)
@@ -107,7 +102,7 @@ function process_pokes(bhv_files::String)
     convert2Bool(curr_data,[:Wall])
     curr_data[:BlockCount] = get_sequence(curr_data,:Streak_n,:Block,:Correct)
     curr_data[:ReverseStreak_n] = reverse(curr_data[:Streak_n])
-    curr_data[:LastBlock] = get_last(curr_data,:Block)
+    #curr_data[:LastBlock] = get_last(curr_data,:Block)
     for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
         delete!(curr_data, x)
     end
@@ -139,22 +134,23 @@ end
 From the pokes dataframe creates one for streaks
 """
 function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
-    columns_list = [:Side, :Stim, :Correct, :Condition, :Protocol, :Block,
-        :LastBlock, :BlockCount, :ReverseStreak_n, :Wall, :ExpDay, :Area, :Gen, :Drug];
-    println("Missing Columns $(setdiff(columns_list, names(data)))")
+    columns_list = [:MouseID, :Gen, :Stim, :Wall, :Drug, :Protocol,
+        :Correct, :BlockCount, :Side, :Condition, :Block,
+        :LastBlock, :ReverseStreak_n, :ExpDay, :Area];
+    #println("Missing Columns $(setdiff(columns_list, names(data)))")
     data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : contains.(data[:Reward],"true")
     data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : contains.(data[:Stim],"true")
-    streak_table = by(data, [:Day, :MouseID, :Streak_n,]) do df
+    streak_table = by(data, :Streak_n) do df
         dd = DataFrame(
         Num_pokes = size(df,1),
         Num_Rewards = length(find(df[:Reward].==1)),
         Start_Reward = df[1,:Reward],
-        Last_Reward = findlast(df[:Reward] .==1),
+        Last_Reward = findlast(df[:Reward] .== 1),
         Prev_Reward = findprev(df[:Reward] .==1, findlast(df[:Reward] .==1)-1),
         Trial_duration = (df[:PokeOut][end]-df[:PokeIn][1]),
         Start = (df[1,:PokeIn]),
         Stop = (df[end,:PokeOut]),
-        Session2 = df[1,:MouseID]*"_"*string(df[:Day][1]),
+        #Session2 = df[1,:MouseID]*"_"*string(df[:Day][1]),
         Session = df[1,:Session],
         InterPoke = maximum(df[:InterPoke]),
         PokeSequence = [SVector{size(df,1),Bool}(df[:Reward])]

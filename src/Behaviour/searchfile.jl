@@ -66,7 +66,7 @@ function get_data(dirnames,what::String)
     for dirname in dirnames
         files = readdir(dirname)
         for file in files
-            if ismatch(Regex(what), file) && !ismatch(Regex("a.txt"), file)
+            if ismatch(Regex(what), file) && !ismatch(Regex(".txt"), file)
                 complete_filename = joinpath(dirname,file)
                 push!(location,complete_filename)
             end

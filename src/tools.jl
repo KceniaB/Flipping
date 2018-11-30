@@ -85,7 +85,7 @@ function get_protocollo(df)
             push!(ProtName,curr_prot)
         end
     end
-    ProtName = categorical(ProtName)
+    #ProtName = categorical(ProtName)
     return ProtName
 end
 """
