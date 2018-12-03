@@ -24,6 +24,7 @@ using Reexport
 
 include("class.jl")
 include("tools.jl")
+include("new_tools.jl")
 include("saving&loading.jl")
 include(joinpath("Behaviour","process_behaviour.jl"))
 include(joinpath("Behaviour","searchfile.jl"))
