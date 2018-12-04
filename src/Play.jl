@@ -23,24 +23,24 @@ analog, events, rec_type = adjust_logfile(analog_filepath);
 bhv = process_pokes(raw_path);
 ##
 function ghost_buster(events,bhv)
-    if maximum(bhv[:Streak_n])==maximum(events[:Streak_n])
-        for i = 1:maximum(bhv[:Streak_n])
-            ongoing_ev = events[events[:Streak_n].==i,:]
-            ongoing_bhv = bhv[bhv[:Streak_n].==i,:]
+    if maximum(bhv[:Streak])==maximum(events[:Streak])
+        for i = 1:maximum(bhv[:Streak])
+            ongoing_ev = events[events[:Streak].==i,:]
+            ongoing_bhv = bhv[bhv[:Streak].==i,:]
             if size(ongoing_ev,1) != size(ongoing_bhv,1)
                 difference = size(ongoing_ev,1) - size(ongoing_bhv,1)
                 println("streak_n $(i) has $(difference) more pokes")
                 wrongpokes = find(ongoing_ev[:Poke_Dur] .== minimum(ongoing_ev[:Poke_Dur])
                 for w in wrongpokes
-                    w_P = ongoing_ev[w,:Poke_n]
-                    w_P_idx = find(events[:Poke_n].== w_P)
+                    w_P = ongoing_ev[w,:Poke]
+                    w_P_idx = find(events[:Poke].== w_P)
                     for x in [:Out,:Out_t]
                         events[w_P_idx,x] = events[w_P_idx+1,x]
                     end
                     events[w_P_idx,:PokeDur] = events[w_P_idx,:PokeDur] + events[w_P_idx+1,:PokeDur]
                 end
                 deleterows!(events, wrongpokes.+1)
-                events[:Poke_n] = collect(1:size(events,1))
+                events[:Poke] = collect(1:size(events,1))
             end
         end
     end
@@ -49,8 +49,8 @@ end
 names(events)
 find(events[:PokeDur] .== minimum(events[:PokeDur]))
 
-events[90:95,[:Poke_n,:PokeDur,:InterPoke,:In,:Out]]
-bhv[90:95,[:Poke_n,:PokeDur,:Streak_n]]
+events[90:95,[:Poke,:PokeDur,:InterPoke,:In,:Out]]
+bhv[90:95,[:Poke,:PokeDur,:Streak]]
 ##
 plotly()
 ##

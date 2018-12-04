@@ -3,60 +3,6 @@
 
 export process_pokes,create_pokes_dataframe, create_streak_dataframe
 
-"""
-`create_DataIndex`
-create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
-or takes all the files in a folder
-"""
-function create_DataIndex(bhv)
-    string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}[a-z]{1}",bhv)
-    mask = string_search.!= nothing
-    string_search = string_search[mask]
-    bhv = bhv[mask]
-    string_result = [res.match for res in string_search if res !== nothing]
-    DataIndex = DataFrame(Bhv_Path = bhv)
-    DataIndex[:Session] = String.(string_result.*".csv")
-    DataIndex[:MouseID] = String.([split(t,"_")[1] for t in DataIndex[:Session]])
-    DataIndex[:Day] = String.(["20"*split(t,"_")[2] for t in DataIndex[:Session]])
-    return DataIndex
-end
-
-
-
-"""
-`find_behavior`
-
-Function that deals with the type of preprocessing Single exp folder or raw data folder
-"""
-
-function find_behavior(Directory_path)
-    Dir = replace(Directory_path,basename(Directory_path),"")
-    saving_path = joinpath(Dir*"/Bhv/")
-    if !ispath(saving_path)
-        mkdir(saving_path)
-    end
-    bhv = get_data(Directory_path);
-    DataIndex = create_DataIndex(bhv);
-    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
-    return DataIndex
-end
-
-function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
-    rawdata_path = joinpath(Directory_path*"run_task_photo/raw_data")
-    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/")
-    if !ispath(saving_path)
-        if !ispath(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
-            mkdir(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
-        end
-        mkdir(saving_path)
-    end
-    bhv = get_data(rawdata_path, Mice_suffix);
-    DataIndex = create_DataIndex(bhv);
-    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
-    return DataIndex
-end
-
-
 
 """
 `process_pokes`
@@ -66,8 +12,8 @@ it takes the path of a session file as argument and return a DataFrame of the se
 """
 function process_pokes(bhv_files::String)
     curr_data= FileIO.load(bhv_files)|> DataFrame
-    rename!(curr_data, Symbol("") => :Poke_n) #change poke counter name
-    curr_data[:Poke_n] = curr_data[:Poke_n].+1
+    rename!(curr_data, Symbol("") => :Poke) #change poke counter name
+    curr_data[:Poke] = curr_data[:Poke].+1
     start_time = curr_data[1,:PokeIn]
     curr_data[:PokeIn] = curr_data[:PokeIn] .- start_time
     curr_data[:PokeOut] = curr_data[:PokeOut] .- start_time
@@ -83,15 +29,15 @@ function process_pokes(bhv_files::String)
     curr_data[:Gen] = gen.(curr_data[:MouseID])
     curr_data[:Drug] = pharm.(curr_data[:Day])
     curr_data[:Protocol] = get_protocollo(curr_data)#create a columns with a unique string to distinguish protocols
-    curr_data[:Streak_n] = get_sequence(curr_data,:Side)
+    curr_data[:Streak] = get_sequence(curr_data,:Side)
     curr_data[:InterPoke] = 0.0
     curr_data[:Poke_h] = 0.0
-    by(curr_data,:Streak_n) do dd
+    by(curr_data,:Streak) do dd
         dd[:InterPoke] = get_shifteddifference(dd,:PokeIn,:PokeOut)
         dd[:Poke_h] = get_hierarchy(dd[:Reward])
     end
     curr_data[:StreakStart] = get_streakstart(curr_data)
-    curr_data[:StreakCount]= get_sequence(curr_data,:Poke_n,:Streak_n)
+    curr_data[:StreakCount]= get_sequence(curr_data,:Poke,:Streak)
     curr_data[:Correct] = get_correct(curr_data)
     try
         curr_data[:Block] = get_sequence(curr_data,:Wall) #enumerates the blocks
@@ -100,8 +46,8 @@ function process_pokes(bhv_files::String)
         curr_data[:Block] = get_sequence(curr_data,:Wall)
     end
     convert2Bool(curr_data,[:Wall])
-    curr_data[:BlockCount] = get_sequence(curr_data,:Streak_n,:Block,:Correct)
-    curr_data[:ReverseStreak_n] = reverse(curr_data[:Streak_n])
+    curr_data[:BlockCount] = get_sequence(curr_data,:Streak,:Block,:Correct)
+    curr_data[:ReverseStreak_n] = reverse(curr_data[:Streak])
     #curr_data[:LastBlock] = get_last(curr_data,:Block)
     for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
         delete!(curr_data, x)
@@ -140,7 +86,7 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     #println("Missing Columns $(setdiff(columns_list, names(data)))")
     data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : contains.(data[:Reward],"true")
     data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : contains.(data[:Stim],"true")
-    streak_table = by(data, :Streak_n) do df
+    streak_table = by(data, :Streak) do df
         dd = DataFrame(
         Num_pokes = size(df,1),
         Num_Rewards = length(find(df[:Reward].==1)),
@@ -164,7 +110,7 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     end
     streak_table[:AfterLast] = streak_table[:Num_pokes] - streak_table[:Last_Reward];
     streak_table[:BeforeLast] = streak_table[:Last_Reward] - streak_table[:Prev_Reward]-1;
-    sort!(streak_table, [order(:Session), order(:Streak_n)])
+    sort!(streak_table, [order(:Session), order(:Streak)])
     #travel duration
     streak_table[:Travel_duration] = 0.0
     by(streak_table,:Session) do dd
@@ -176,7 +122,7 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
     #     delete!(streak_table, :Session2)
     # end
     if photometry
-        frames = by(data, [:Session, :Streak_n]) do df
+        frames = by(data, [:Session, :Streak]) do df
             dd = DataFrame(
             In = df[1,:In],
             Out = df[end,:Out],

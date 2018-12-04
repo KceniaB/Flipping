@@ -35,7 +35,7 @@ end
 function edit_events!(bhv,events,analog)
     analog[:L_p] = 0.0
     for i=1:size(events,1)
-        events[i,:Streak_n] = bhv[i,:Streak_n]
+        events[i,:Streak] = bhv[i,:Streak]
         if bhv[i,:Side]
             events[i,:Side] = "L"
         else
@@ -91,32 +91,32 @@ function ghost_buster(bhv,difference;dur_threshold = 0.1019999999999)
 end
 
 function events_buster(events,bhv)
-    if maximum(bhv[:Streak_n]) == maximum(events[:Streak_n])
+    if maximum(bhv[:Streak]) == maximum(events[:Streak])
         println("number of streaks is correct")
         incorrect = []
-        for i = 1:maximum(bhv[:Streak_n])
-            ongoing_ev = events[events[:Streak_n].==i,:]
-            ongoing_bhv = bhv[bhv[:Streak_n].==i,:]
+        for i = 1:maximum(bhv[:Streak])
+            ongoing_ev = events[events[:Streak].==i,:]
+            ongoing_bhv = bhv[bhv[:Streak].==i,:]
             if size(ongoing_ev,1) != size(ongoing_bhv,1)
                 difference = size(ongoing_ev,1) - size(ongoing_bhv,1)
                 println("streak_n $(i) has $(difference) more pokes")
                 wrongpokes = find(ongoing_ev[:PokeDur] .== minimum(ongoing_ev[:PokeDur]))
                 push!(incorrect,wrongpokes)
                 for w in wrongpokes
-                    w_P = ongoing_ev[w,:Poke_n]
-                    w_P_idx = find(events[:Poke_n].== w_P)
+                    w_P = ongoing_ev[w,:Poke]
+                    w_P_idx = find(events[:Poke].== w_P)
                     for x in [:Out,:Out_t]
                         events[w_P_idx,x] = events[w_P_idx+1,x]
                     end
                     events[w_P_idx,:PokeDur] = events[w_P_idx,:PokeDur] + events[w_P_idx+1,:PokeDur]
                 end
                 deleterows!(events, wrongpokes.+1)
-                events[:Poke_n] = collect(1:size(events,1))
+                events[:Poke] = collect(1:size(events,1))
             end
         end
     else
         println("number of streaks is incorrect")
-        println( "size event streak = $(maximum(events[:Streak_n])), size bhv streaks = $(maximum(bhv[:Streak_n]))")
+        println( "size event streak = $(maximum(events[:Streak])), size bhv streaks = $(maximum(bhv[:Streak]))")
         return nothing
     end
     return incorrect
@@ -170,7 +170,7 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = tr
     end
     result = vcat(result,["sn_"*x for x in result],["Pokes"])
     essential = trace[:,Symbol.(result)]
-    bhv = join(bhv,events[:,[:Poke_n,:In,:Out]], on = :Poke_n)
+    bhv = join(bhv,events[:,[:Poke,:In,:Out]], on = :Poke)
     streaks = process_streaks(bhv; photometry = true)
     structure = PhotometryStructure(bhv,streaks,essential);
     if onlystructure

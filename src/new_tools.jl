@@ -1,3 +1,5 @@
+export process_pokes,process_streaks, create_exp_dataframe
+
 """
 `iscolumn`
 """
@@ -227,7 +229,7 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
 
     streak_table[:AfterLast] = streak_table[:Num_pokes] .- streak_table[:Last_Reward];
     streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward]-1;
-    streak_table[:Travel_to]  = lead(streak_table[:Start],defoult = 0.0) .- streak_table[:Stop]
+    streak_table[:Travel_to]  = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop]
 
     if photometry
         frames = by(df, :Streak) do df
@@ -262,13 +264,13 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
         session = DataIndex[i,:Session]
         filetosave = DataIndex[i,:Preprocessed_Path]
         if ~isfile(filetosave)
-            pokes_data = process_pokes2(path)
-            streaks_data = process_streaks2(pokes_data)
+            pokes_data = process_pokes(path)
+            streaks_data = process_streaks(pokes_data)
             FileIO.save(filetosave,pokes_data)
             b=b+1
         else
             pokes_data = FileIO.load(filetosave)|> DataFrame
-            streaks_data = process_streaks2(pokes_data)
+            streaks_data = process_streaks(pokes_data)
             c=c+1
         end
         if isempty(pokes)
@@ -347,7 +349,33 @@ end
 
 function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String, Mice_suffix::String)
     DataIndex = Flipping.find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
-    pokes, streaks = process_session2(DataIndex)
+    pokes, streaks = process_sessions(DataIndex)
+    pokes = Flipping.check_fiberlocation(pokes,Exp_name)
+    exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
+    protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
+    pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
+    pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    mask = contains.(String.(names(pokes)),"_1")
+    for x in[names(pokes)[mask]]
+        delete!(pokes, x)
+    end
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
+    @save filetosave pokes
+    streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
+    streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
+    streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    mask = contains.(String.(names(streaks)),"_1")
+    for x in[names(streaks)[mask]]
+        delete!(streaks, x)
+    end
+    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
+    @save filetosave streaks
+    return pokes, streaks, DataIndex
+end
+
+function create_exp_dataframes(Raw_data_dir)
+    DataIndex = Flipping.find_behavior(Raw_data_dir)
+    pokes, streaks = process_sessions(DataIndex)
     pokes = Flipping.check_fiberlocation(pokes,Exp_name)
     exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
     protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)

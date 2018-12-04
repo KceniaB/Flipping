@@ -169,8 +169,8 @@ function observe_pokes(analog,conversion_rate,rec_type::Bool)
         append!(events,DataFrame(In = L_in, Side = repmat(["L"],size(L_in,1)), Out = L_out))
         sort!(events,:In)
     end
-    events[:Poke_n] = collect(1:size(events,1))
-    events[:Streak_n] = get_sequence(events,:Side)
+    events[:Poke] = collect(1:size(events,1))
+    events[:Streak] = count_sequence(events[:Side])
     events[:In_t] = events[:In]./conversion_rate
     events[:Out_t] = events[:Out]./conversion_rate
     start_time = events[1,:In_t]
@@ -178,7 +178,7 @@ function observe_pokes(analog,conversion_rate,rec_type::Bool)
     events[:Out_t] = events[:Out_t].- start_time
     events[:PokeDur] = events[:Out_t]-events[:In_t]
     events[:InterPoke] = 0.0
-    by(events,:Streak_n) do dd
+    by(events,:Streak) do dd
         dd[:InterPoke] = get_shifteddifference(dd,:In_t,:Out_t)
     end
     return events

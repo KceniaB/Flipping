@@ -18,9 +18,9 @@ function add_streaks(analog, events)
     end
     counter = 1
     analog[:Pokes] = analog[:R_p]+analog[:L_p]
-    analog[:Poke_n] = 0
+    analog[:Poke] = 0
     for i = 1:size(events,1)
-        analog[events[i,:In]:events[i,:Out],:Poke_n] = counter
+        analog[events[i,:In]:events[i,:Out],:Poke] = counter
         counter = counter + 1
     end
     # Streaks the first part assignes the side from the first poke to the one to last
@@ -28,16 +28,16 @@ function add_streaks(analog, events)
     analog[:StreakEnd] = false
     analog[:StreakIn_n] = 0
     analog[:StreakOut_n] = 0
-    analog[:Streak_n] = 0
+    analog[:Streak] = 0
     analog[:Side] = "travel"
-    by(events,:Streak_n) do dd
+    by(events,:Streak) do dd
         start = dd[1,:In]
         finish = dd[end,:Out]
         analog[start,:StreakStart] = true
         analog[finish,:StreakEnd] = true
-        analog[start,:StreakIn_n] = dd[1,:Streak_n]
-        analog[finish,:StreakOut_n] = dd[1,:Streak_n]
-        analog[start:finish,:Streak_n] = dd[1,:Streak_n]
+        analog[start,:StreakIn_n] = dd[1,:Streak]
+        analog[finish,:StreakOut_n] = dd[1,:Streak]
+        analog[start:finish,:Streak] = dd[1,:Streak]
         analog[start:finish,:Side] = dd[1,:Side]
     end
     return analog

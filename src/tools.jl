@@ -21,23 +21,6 @@ function convert2Int(df,symbols)
 end
 
 """
-`get_CAMmousedate(filepath, pattern)`
-
-it extract the session name by pattern match:
-It assumes that the date of the creation of the file is the day of the session
-"""
-function get_CAMmousedate(filepath, pattern)
-    fileinfo = get_sessionname(filepath,pattern)
-    mouse, note = split(fileinfo, "_")[1:2]# decompose the file name by _ and take the first as animal name
-    #and the second as extra experimental note, like target area
-    date = Dates.Date(Dates.unix2datetime(ctime(filepath)))#return the date from file properties,
-    #convert it from unix to normal time and take only the date
-    mouse = String(mouse)
-    note = String(mouse)
-    return mouse, date, note
-end
-
-"""
 `get_BHVmousedate(filepath)`
 
 it extract the session name by Regular expression match:
@@ -172,7 +155,7 @@ function get_streakstart(df)
     Streakstart = Bool[true]
     for i= 2:size(df,1)
         #if previous streak counter is different from the current
-        if df[i,:Streak_n] != df[i-1,:Streak_n]
+        if df[i,:Streak] != df[i-1,:Streak]
             push!(Streakstart,true) #begin of a new trial
         else
             push!(Streakstart,false)#otherwise same trial

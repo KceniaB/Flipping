@@ -1,53 +1,4 @@
 """
-`paths_dataframe`
-Create a Dataframe to store paths of files to preprocess
-"""
-function paths_dataframe(bhv)
-    behavior = DataFrame()
-    # behavior[:Bhv_Path] = bhv[.!contains.(bhv,"txt")]
-    # ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
-    # MouseID = Array{String}(size(behavior,1))
-    # Day = Array{String}(size(behavior,1))
-    # Session = Array{String}(size(behavior,1))
-    # for i = collect(1:size(behavior,1))
-    #     MouseID[i], Day[i], Session[i] = get_BHVmousedate(behavior[i,:Bhv_Path])
-    # end
-    # behavior[:MouseID] = MouseID
-    # behavior[:Day] = Day#file properties are not reliable for the date of the session
-    # behavior[:Session] = Session.*".csv";
-    mask = contains.(bhv,"txt")
-    bhv = bhv[mask]
-    ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
-    MouseID = Array{String}(size(bhv,1))
-    Day = Array{String}(size(bhv,1))
-    Session = Array{String}(size(bhv,1))
-    for i = 1:size(bhv,1)
-        MouseID[i], Day[i], Session[i] = Flipping.get_BHVmousedate(bhv[i])
-    end
-    behavior = DataFrame(MouseID = MouseID)
-    behavior[:Day] = Day #file properties are not reliable for the date of the session
-    behavior[:Session] = Session.*".csv"
-    behavior[:Bhv_Path] = bhv
-
-    return behavior
-end
-
-
-"""
-`createfilelist`
-use get_data function to obtain all filenames of behaviour
-"""
-function createfilelist(Directory_path::String, Mice_suffix::String)
-    bhv = get_data(Directory_path,:bhv)
-    #use get_sessionname to select relevant session (for instance use exp naming code)
-    bhv_session = map(t->get_sessionname(t,Mice_suffix),bhv)#to be changed for each dataframe
-    # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
-    bhv = bhv[bhv_session.!="start"]
-    bhv_session = bhv_session[bhv_session.!="start"]
-    return bhv
-end
-
-"""
 `get_data`
 
 Functions to find the path to data files according to character pattern considering that each session is a subfolder
@@ -98,8 +49,96 @@ function get_data(Dir::String)
 end
 
 """
-`get_sessionname(filepath, what::String)`
+`find_behavior`
+Function that deals with the type of preprocessing Single exp folder or raw data folder
 
+"""
+
+function find_behavior(Directory_path)
+    Dir = replace(Directory_path,basename(Directory_path),"")
+    saving_path = joinpath(Dir*"/Bhv/")
+    if !ispath(saving_path)
+        mkdir(saving_path)
+    end
+    bhv = get_data(Directory_path);
+    DataIndex = create_DataIndex(bhv);
+    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    return DataIndex
+end
+
+function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
+    rawdata_path = joinpath(Directory_path*"run_task_photo/raw_data")
+    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/")
+    if !ispath(saving_path)
+        if !ispath(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
+            mkdir(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
+        end
+        mkdir(saving_path)
+    end
+    bhv = get_data(rawdata_path, Mice_suffix);
+    DataIndex = create_DataIndex(bhv);
+    DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    return DataIndex
+end
+
+"""
+`create_DataIndex`
+create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
+or takes all the files in a folder
+"""
+function create_DataIndex(bhv)
+    string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}[a-z]{1}",bhv)
+    mask = string_search.!= nothing
+    string_search = string_search[mask]
+    bhv = bhv[mask]
+    string_result = [res.match for res in string_search if res !== nothing]
+    DataIndex = DataFrame(Bhv_Path = bhv)
+    DataIndex[:Session] = String.(string_result.*".csv")
+    DataIndex[:MouseID] = String.([split(t,"_")[1] for t in DataIndex[:Session]])
+    DataIndex[:Day] = String.(["20"*split(t,"_")[2] for t in DataIndex[:Session]])
+    return DataIndex
+end
+
+"""
+`paths_dataframe`
+Create a Dataframe to store paths of files to preprocess
+"""
+function paths_dataframe(bhv)
+    behavior = DataFrame()
+    mask = contains.(bhv,"txt")
+    bhv = bhv[mask]
+    ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
+    MouseID = Array{String}(size(bhv,1))
+    Day = Array{String}(size(bhv,1))
+    Session = Array{String}(size(bhv,1))
+    for i = 1:size(bhv,1)
+        MouseID[i], Day[i], Session[i] = Flipping.get_BHVmousedate(bhv[i])
+    end
+    behavior = DataFrame(MouseID = MouseID)
+    behavior[:Day] = Day #file properties are not reliable for the date of the session
+    behavior[:Session] = Session.*".csv"
+    behavior[:Bhv_Path] = bhv
+
+    return behavior
+end
+
+
+"""
+`createfilelist`
+use get_data function to obtain all filenames of behaviour
+"""
+function createfilelist(Directory_path::String, Mice_suffix::String)
+    bhv = get_data(Directory_path,:bhv)
+    #use get_sessionname to select relevant session (for instance use exp naming code)
+    bhv_session = map(t->get_sessionname(t,Mice_suffix),bhv)#to be changed for each dataframe
+    # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
+    bhv = bhv[bhv_session.!="start"]
+    bhv_session = bhv_session[bhv_session.!="start"]
+    return bhv
+end
+
+"""
+`get_sessionname(filepath, what::String)`
 Use it to find the name of a session from a path, can accept a string or a symbol connected to a dict to find
 file matching the requirements
 """
@@ -149,9 +188,30 @@ function get_session(filepath,what::String)
 end
 
 """
+`get_CAMmousedate(filepath, pattern)`
+
+it extract the session name by pattern match:
+It assumes that the date of the creation of the file is the day of the session
+"""
+function get_CAMmousedate(filepath, pattern)
+    fileinfo = get_sessionname(filepath,pattern)
+    mouse, note = split(fileinfo, "_")[1:2]# decompose the file name by _ and take the first as animal name
+    #and the second as extra experimental note, like target area
+    date = Dates.Date(Dates.unix2datetime(ctime(filepath)))#return the date from file properties,
+    #convert it from unix to normal time and take only the date
+    mouse = String(mouse)
+    note = String(mouse)
+    return mouse, date, note
+end
+
+
+"""
 `gatherfilesphotometry`
 """
-function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_suffix::String,bad_days)
+function gatherfilesphotometry(Directory_path::String,Exp_name::String,Mice_suffix::String,Exp_type::String,bad_days)
+    Camera_path = Directory_path*"run_task_photo/"*Exp_name*"/Cam/"
+    Behavior_path = joinpath(Directory_path*"run_task_photo/raw_data")
+    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name)
     cam = get_data(Camera_path,:cam)
     #use get_sessionname to select relevant session (for instance use exp naming code)
     cam_session = map(t->get_sessionname(t,Mice_suffix),cam)
@@ -227,6 +287,7 @@ function gatherfilesphotometry(Camera_path::String,Behavior_path::String,Mice_su
     for x in DataIndex[:Bhv_Session]
         push!(provisory,replace(x,"a.csv",""))
     end
+    DataIndex[:Saving_path] = saving_path
     DataIndex[:Exp_Path]= replace(Camera_path,"Cam/","")
     DataIndex[:Exp_Name]=String(split(DataIndex[1,:Exp_Path],"/")[end-1])
     DataIndex[:Session] = provisory
