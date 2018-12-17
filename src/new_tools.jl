@@ -166,6 +166,7 @@ function process_pokes(filepath::String)
     curr_data[:Gen] = Flipping.gen.(curr_data[:MouseID])
     curr_data[:Drug] = Flipping.pharm.(curr_data[:Day])
     curr_data[:Protocol] = Flipping.get_protocollo(curr_data)
+    curr_data[:Stim_Day] = length(find(curr_data[:Stim])) == 0 ? false : true
     curr_data[:Streak] = count_sequence(curr_data[:Side])
     curr_data[:ReverseStreak] = reverse(curr_data[:Streak])
     curr_data[:Poke_within_Streak] = 0
@@ -193,8 +194,8 @@ end
 """
 
 function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
-    columns_list = [:MouseID, :Gen, :Drug,:Day, :Condition, :ExpDay, :Area,:Session];
-    booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct]#columns to convert to Bool
+    columns_list = [:MouseID, :Gen, :Drug,:Day, :Stim_Day,:Condition, :ExpDay, :Area,:Session];
+    booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
     for x in booleans
         df[x] = eltype(df[x]) == Bool ? df[x] : contains.(df[x],"true")
     end
@@ -270,6 +271,10 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
             b=b+1
         else
             pokes_data = FileIO.load(filetosave)|> DataFrame
+            booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
+            for x in booleans
+                pokes_data[x] = eltype(pokes_data[x]) == Bool ? pokes_data[x] : contains.(pokes_data[x],"true")
+            end
             streaks_data = process_streaks(pokes_data)
             c=c+1
         end
@@ -278,8 +283,13 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
             pokes = pokes_data
             streaks = streaks_data
         else
-            append!(pokes, pokes_data[:, names(pokes)])
-            append!(streaks, streaks_data[:, names(streaks)])
+            try
+                append!(pokes, pokes_data)
+                append!(streaks, streaks_data)
+            catch
+                append!(pokes, pokes_data[:, names(pokes)])
+                append!(streaks, streaks_data[:, names(streaks)])
+            end
         end
     end
     println("Existing file = ",c," Preprocessed = ",b)
@@ -351,10 +361,14 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     DataIndex = Flipping.find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
     pokes, streaks = process_sessions(DataIndex)
     pokes = Flipping.check_fiberlocation(pokes,Exp_name)
-    exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
-    protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
-    pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    exp_calendar = by(pokes,:MouseID) do dd
+        Flipping.create_exp_calendar(dd,:Day)
+    end
+    protocol_calendar = by(pokes,:MouseID) do dd
+        Flipping.create_exp_calendar(pokes,:Day,:Protocol)
+    end
+    pokes = join(pokes, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
+    pokes = join(pokes, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     mask = contains.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
@@ -362,8 +376,8 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
     @save filetosave pokes
     streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
-    streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    streaks = join(streaks, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
+    streaks = join(streaks, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     mask = contains.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
