@@ -260,7 +260,7 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
     pokes = []
     streaks = []
     for i=1:size(DataIndex,1)
-        print(i," ")
+        #print(i," ")
         path = DataIndex[i,:Bhv_Path]
         session = DataIndex[i,:Session]
         filetosave = DataIndex[i,:Preprocessed_Path]
@@ -348,6 +348,8 @@ function create_exp_calendar(df::AbstractDataFrame,days::Symbol,manipulation::Sy
     end
     what = string(manipulation)
     new_name = Symbol(what*"_Day")
+    reordered = sortperm(x,(days))
+    x = x[reordered,:]
     x[new_name] = count_series(x[:manipulation_state])
     delete!(x,:manipulation_state)
     return x
@@ -365,7 +367,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
         Flipping.create_exp_calendar(dd,:Day)
     end
     protocol_calendar = by(pokes,:MouseID) do dd
-        Flipping.create_exp_calendar(pokes,:Day,:Protocol)
+        Flipping.create_exp_calendar(dd,:Day,:Protocol)
     end
     pokes = join(pokes, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     pokes = join(pokes, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
