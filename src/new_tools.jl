@@ -279,7 +279,6 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
             c=c+1
         end
         if isempty(pokes)
-            print("ehm ")
             pokes = pokes_data
             streaks = streaks_data
         else
