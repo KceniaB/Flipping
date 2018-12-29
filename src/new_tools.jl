@@ -362,7 +362,6 @@ end
 function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String, Mice_suffix::String)
     DataIndex = Flipping.find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
     pokes, streaks = process_sessions(DataIndex)
-    pokes = Flipping.check_fiberlocation(pokes,Exp_name)
     exp_calendar = by(pokes,:MouseID) do dd
         Flipping.create_exp_calendar(dd,:Day)
     end
@@ -375,15 +374,16 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
+    pokes = Flipping.check_fiberlocation(pokes,Directory_path,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
     @save filetosave pokes
-    streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
     streaks = join(streaks, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     mask = contains.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end
+    streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
     @save filetosave streaks
     return pokes, streaks, DataIndex
@@ -392,7 +392,6 @@ end
 function create_exp_dataframes(Raw_data_dir)
     DataIndex = Flipping.find_behavior(Raw_data_dir)
     pokes, streaks = process_sessions(DataIndex)
-    pokes = Flipping.check_fiberlocation(pokes,Exp_name)
     exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
     protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
     pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
@@ -401,15 +400,16 @@ function create_exp_dataframes(Raw_data_dir)
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
+    pokes = Flipping.check_fiberlocation(pokes,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
     @save filetosave pokes
-    streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
     streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
     mask = contains.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end
+    streaks = Flipping.check_fiberlocation(streaks,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
     @save filetosave streaks
     return pokes, streaks, DataIndex

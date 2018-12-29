@@ -1,40 +1,3 @@
-# """
-# `create_processed_files`
-# given a DataIndex proceed to process all the sessions and save
-# the single session behaviour, traces, events and structures
-# keywar arguments is saving: Bool default true, if false
-# doesn't save the single session files and only returns
-# the array of PhotometryStructures
-# """
-# function create_processed_files(DataIndex;saving = true)
-#     if saving
-#         exp_dir = joinpath(DataIndex[1,:Saving_path],"Structures")
-#         if !ispath(exp_dir)
-#             mkdir(exp_dir)
-#         end
-#         saving_path = DataIndex[1,:Saving_path]*"/Structures/single_session/"
-#         if !ispath(saving_path)
-#             mkdir(saving_path)
-#         end
-#     end
-#     Structure_pokes = Array{PhotometryStructure, 1}(0)
-#     for idx = 1:size(DataIndex,1)
-#         println("processing session structure ",DataIndex[idx,:Session], " idx = ",idx)
-#         structure = process_photo(DataIndex,idx)
-#         # trace_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Trace_"*DataIndex[idx,:Session]*".csv"
-#         # events_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Events_"*DataIndex[idx,:Session]*".csv"
-#         # bhv_file = DataIndex[idx,:Exp_Path]*"Bhv/"*DataIndex[idx,:Session]*".csv"
-#         ongoing_session = "Struct"*DataIndex[idx,:Session]*".jld2"
-#         struct_file = joinpath(saving_path,ongoing_session)
-#         # FileIO.save(trace_file,trace)
-#         # FileIO.save(events_file,events)
-#         # FileIO.save(bhv_file,bhv)
-#         @save struct_file structure
-#         push!(Structure_pokes,structure)
-#     end
-#     return  Structure_pokes
-# end
-
 """
 `carica`
 since jld2 files are saved as dictionaries
@@ -81,4 +44,41 @@ end
 #         @save struct_file Structure_pokes
 #     end
 #     return Structure_pokes
+# end
+
+# """
+# `create_processed_files`
+# given a DataIndex proceed to process all the sessions and save
+# the single session behaviour, traces, events and structures
+# keywar arguments is saving: Bool default true, if false
+# doesn't save the single session files and only returns
+# the array of PhotometryStructures
+# """
+# function create_processed_files(DataIndex;saving = true)
+#     if saving
+#         exp_dir = joinpath(DataIndex[1,:Saving_path],"Structures")
+#         if !ispath(exp_dir)
+#             mkdir(exp_dir)
+#         end
+#         saving_path = DataIndex[1,:Saving_path]*"/Structures/single_session/"
+#         if !ispath(saving_path)
+#             mkdir(saving_path)
+#         end
+#     end
+#     Structure_pokes = Array{PhotometryStructure, 1}(0)
+#     for idx = 1:size(DataIndex,1)
+#         println("processing session structure ",DataIndex[idx,:Session], " idx = ",idx)
+#         structure = process_photo(DataIndex,idx)
+#         # trace_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Trace_"*DataIndex[idx,:Session]*".csv"
+#         # events_file = DataIndex[idx,:Exp_Path]*"Traces/"*"Events_"*DataIndex[idx,:Session]*".csv"
+#         # bhv_file = DataIndex[idx,:Exp_Path]*"Bhv/"*DataIndex[idx,:Session]*".csv"
+#         ongoing_session = "Struct"*DataIndex[idx,:Session]*".jld2"
+#         struct_file = joinpath(saving_path,ongoing_session)
+#         # FileIO.save(trace_file,trace)
+#         # FileIO.save(events_file,events)
+#         # FileIO.save(bhv_file,bhv)
+#         @save struct_file structure
+#         push!(Structure_pokes,structure)
+#     end
+#     return  Structure_pokes
 # end
