@@ -17,7 +17,7 @@ function get_data(dirnames,what::String)
     for dirname in dirnames
         files = readdir(dirname)
         for file in files
-            if ismatch(Regex(what), file) && !ismatch(Regex(".txt"), file)
+            if occursin(Regex(what), file) && !occursin(Regex(".txt"), file)
                 complete_filename = joinpath(dirname,file)
                 push!(location,complete_filename)
             end
@@ -40,7 +40,7 @@ function get_data(Dir::String)
     files = readdir(Dir)
     bhv = []
     for file in files
-        if ismatch(Regex(".csv"), file)
+        if occursin(Regex(".csv"), file)
             complete_filename = joinpath(Dir,file)
             push!(bhv,complete_filename)
         end
@@ -105,7 +105,7 @@ Create a Dataframe to store paths of files to preprocess
 """
 function paths_dataframe(bhv)
     behavior = DataFrame()
-    mask = contains.(bhv,"txt")
+    mask = occursin.(bhv,"txt")
     bhv = bhv[mask]
     ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
     MouseID = Array{String}(size(bhv,1))
@@ -147,7 +147,7 @@ function get_sessionname(filepath, what::String)
     pathinfo = split(filepath,"/")
     sessionname = "start"
     for piece in pathinfo
-        if ismatch(Regex(what), string(piece))
+        if occursin(Regex(what), string(piece))
             sessionname = piece
         end
     end
@@ -175,7 +175,7 @@ function get_session(filepath,what::String)
     a = get_sessionname(filepath,what)
     b = match(r"[a-zA-Z]{2}\d+",a)
     c = b.match
-    if ismatch(r"\d{8}",a)
+    if occursin(r"\d{8}",a)
         d = match(r"\d{8}",a)
         e = d.match
         e = e[3:8]

@@ -131,7 +131,7 @@ function nextcount(count::T, rewarded) where {T <: Number}
         count < 0 ? count - 1 : -one(T)
     end
 end
-signedcount(v::AbstractArray{Bool}) = accumulate(nextcount, 0.0, v)
+signedcount(v::AbstractArray{Bool}) = accumulate(nextcount, v;init=0.0)
 get_hierarchy(v) = lag(signedcount(v), default = NaN)
 
 
@@ -166,7 +166,7 @@ function process_pokes(filepath::String)
     curr_data[:Gen] = Flipping.gen.(curr_data[:MouseID])
     curr_data[:Drug] = Flipping.pharm.(curr_data[:Day])
     curr_data[:Protocol] = Flipping.get_protocollo(curr_data)
-    curr_data[:Stim_Day] = length(find(curr_data[:Stim])) == 0 ? false : true
+    curr_data[:Stim_Day] = length(findall(curr_data[:Stim])) == 0 ? false : true
     curr_data[:Streak] = count_sequence(curr_data[:Side])
     curr_data[:ReverseStreak] = reverse(curr_data[:Streak])
     curr_data[:Poke_within_Streak] = 0
@@ -174,7 +174,8 @@ function process_pokes(filepath::String)
     curr_data[:Poke_Hierarchy] = 0.0
     by(curr_data,:Streak) do dd
         dd[:Poke_within_Streak] = count_sequence(dd[:Poke])
-        dd[:InterPoke] = lead(dd[:PokeIn],default = 0.0) .- dd[:PokeOut]
+        prov = lead(dd[:PokeIn],default = 0.0) .- dd[:PokeOut]
+        dd[:InterPoke]  = [x.< 0 ? 0 : x for x in prov]
         dd[:Poke_Hierarchy] = Flipping.get_hierarchy(dd[:Reward])
     end
     curr_data[:Block] = count_sequence(curr_data[:Wall])
@@ -184,7 +185,7 @@ function process_pokes(filepath::String)
     end
     curr_data[:Correct] = curr_data[:Side] .== curr_data[:SideHigh]
     for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
-        delete!(curr_data, x)
+        deletecols!(curr_data, x)
     end
     return curr_data
 end
@@ -197,15 +198,15 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
     columns_list = [:MouseID, :Gen, :Drug,:Day, :Stim_Day,:Condition, :ExpDay, :Area,:Session];
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
     for x in booleans
-        df[x] = eltype(df[x]) == Bool ? df[x] : contains.(df[x],"true")
+        df[x] = eltype(df[x]) == Bool ? df[x] : occursin.(df[x],"true")
     end
     streak_table = by(df, :Streak) do dd
         dt = DataFrame(
         Num_pokes = size(dd,1),
-        Num_Rewards = length(find(dd[:Reward].==1)),
+        Num_Rewards = length(findall(dd[:Reward].==1)),
         Start_Reward = dd[1,:Reward],
-        Last_Reward = findlast(dd[:Reward] .== 1),
-        Prev_Reward = findprev(dd[:Reward] .==1, findlast(dd[:Reward] .==1)-1),
+        Last_Reward = findlast(dd[:Reward] .== 1).== nothing ? NaN : findlast(dd[:Reward] .== 1),
+        Prev_Reward = findlast(dd[:Reward] .== 1).== nothing ? NaN : findprev(dd[:Reward] .==1, findlast(dd[:Reward] .==1)-1),
         Trial_duration = (dd[end,:PokeOut]-dd[1,:PokeIn]),
         Start = (dd[1,:PokeIn]),
         Stop = (dd[end,:PokeOut]),
@@ -227,11 +228,11 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         end
         return dt
     end
-
+    streak_table[:Prev_Reward] = [x .== nothing ? NaN : x for x in streak_table[:Prev_Reward]]
     streak_table[:AfterLast] = streak_table[:Num_pokes] .- streak_table[:Last_Reward];
-    streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward]-1;
-    streak_table[:Travel_to]  = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop]
-
+    streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward].-1;
+    prov = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop];
+    streak_table[:Travel_to]  = [x.< 0 ? 0 : x for x in prov]
     if photometry
         frames = by(df, :Streak) do df
             dd = DataFrame(
@@ -266,14 +267,14 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
         filetosave = DataIndex[i,:Preprocessed_Path]
         if ~isfile(filetosave)
             pokes_data = process_pokes(path)
-            streaks_data = process_streaks(pokes_data)
             FileIO.save(filetosave,pokes_data)
+            streaks_data = process_streaks(pokes_data)
             b=b+1
         else
             pokes_data = FileIO.load(filetosave)|> DataFrame
             booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
             for x in booleans
-                pokes_data[x] = eltype(pokes_data[x]) == Bool ? pokes_data[x] : contains.(pokes_data[x],"true")
+                pokes_data[x] = eltype(pokes_data[x]) == Bool ? pokes_data[x] : occursin.(pokes_data[x],"true")
             end
             streaks_data = process_streaks(pokes_data)
             c=c+1
@@ -318,7 +319,7 @@ end
 
 function count_series(vector)
     x = check_series(vector)
-    res = accumulate(count_trues,0,x)
+    res = accumulate(count_trues,x;init=0)
     return res
 end
 
@@ -350,7 +351,7 @@ function create_exp_calendar(df::AbstractDataFrame,days::Symbol,manipulation::Sy
     reordered = sortperm(x,(days))
     x = x[reordered,:]
     x[new_name] = count_series(x[:manipulation_state])
-    delete!(x,:manipulation_state)
+    deletecols!(x,:manipulation_state)
     return x
 end
 
@@ -369,7 +370,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     end
     pokes = join(pokes, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     pokes = join(pokes, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
-    mask = contains.(String.(names(pokes)),"_1")
+    mask = occursin.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
@@ -378,9 +379,9 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     @save filetosave pokes
     streaks = join(streaks, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
-    mask = contains.(String.(names(streaks)),"_1")
+    mask = occursin.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
-        delete!(streaks, x)
+        deletecols!(streaks, x)
     end
     streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
@@ -395,7 +396,7 @@ function create_exp_dataframes(Raw_data_dir)
     protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
     pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
     pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = contains.(String.(names(pokes)),"_1")
+    mask = occursin.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
@@ -404,7 +405,7 @@ function create_exp_dataframes(Raw_data_dir)
     @save filetosave pokes
     streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = contains.(String.(names(streaks)),"_1")
+    mask = occursin.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end

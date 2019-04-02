@@ -47,12 +47,12 @@ end
 `sliding_f0`
 """
 
-function sliding_f0(traces::AbstractDataFrame,ongoing_trace::Symbol,norm_range::Range) # return one ShiftedArray
+function sliding_f0(traces::AbstractDataFrame,ongoing_trace::Symbol,norm_range::UnitRange) # return one ShiftedArray
     ongoing = traces[ongoing_trace]
     sliding_f0(ongoing,norm_range)
 end
 
-function sliding_f0(ongoing_trace::Vector,norm_range::Range) #return one normalised vector
+function sliding_f0(ongoing_trace::Vector,norm_range::UnitRange) #return one normalised vector
     sliding_start = - (norm_range.start + norm_range.stop)
     transformed_trace = repmat([0.0],sliding_start)
     for i = sliding_start+1:size(ongoing_trace,1)

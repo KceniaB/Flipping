@@ -77,7 +77,7 @@ function read_log(analog_filepath)
     analog= FileIO.load(analog_filepath,header_exists=false) |> DataFrame;
     analog = analog[:,1:6];
     names!(analog,[:timestamp,:R_p,:L_p,:Rew,:SideHigh,:Protocol]);
-    if isempty(find(analog[:Rew].<-2))
+    if isempty(findall(analog[:Rew].<-2))
         rec_type = false
     else
         rec_type = true
@@ -88,7 +88,7 @@ function read_log(analog_filepath)
             analog[name] = collect(1:1:size(analog,1))
         else
              check = cancelnoise(analog[name])
-            if !isempty(find(check))
+            if !isempty(findall(check))
                 analog[name] = check
             end
             inds = analog[name].<4.7
@@ -138,9 +138,9 @@ return the index of a squarewave signal either begins or ends
 function find_events(squarewave,which)
     digital_trace = Bool.(squarewave)
     if which == :in
-        indexes = find(.!digital_trace[1:end-1] .& digital_trace[2:end])
+        indexes = findall(.!digital_trace[1:end-1] .& digital_trace[2:end])
     elseif which == :out
-        indexes = find(digital_trace[1:end-1] .& .!digital_trace[2:end])
+        indexes = findall(digital_trace[1:end-1] .& .!digital_trace[2:end])
     end
     return indexes
 end

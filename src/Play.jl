@@ -30,10 +30,10 @@ function ghost_buster(events,bhv)
             if size(ongoing_ev,1) != size(ongoing_bhv,1)
                 difference = size(ongoing_ev,1) - size(ongoing_bhv,1)
                 println("streak_n $(i) has $(difference) more pokes")
-                wrongpokes = find(ongoing_ev[:Poke_Dur] .== minimum(ongoing_ev[:Poke_Dur])
+                wrongpokes = findall(ongoing_ev[:Poke_Dur] .== minimum(ongoing_ev[:Poke_Dur])
                 for w in wrongpokes
                     w_P = ongoing_ev[w,:Poke]
-                    w_P_idx = find(events[:Poke].== w_P)
+                    w_P_idx = findall(events[:Poke].== w_P)
                     for x in [:Out,:Out_t]
                         events[w_P_idx,x] = events[w_P_idx+1,x]
                     end
@@ -47,7 +47,7 @@ function ghost_buster(events,bhv)
     return events
 end
 names(events)
-find(events[:PokeDur] .== minimum(events[:PokeDur]))
+findall(events[:PokeDur] .== minimum(events[:PokeDur]))
 
 events[90:95,[:Poke,:PokeDur,:InterPoke,:In,:Out]]
 bhv[90:95,[:Poke,:PokeDur,:Streak]]

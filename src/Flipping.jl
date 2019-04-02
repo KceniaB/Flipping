@@ -1,11 +1,12 @@
 module Flipping
 using Reexport
+@reexport using Statistics
 #using Preprocess
 #using ProcessPhotometry
 #@reexport using FFTViews
 #@reexport using Reexport
 @reexport using DataFrames
-@reexport using MAT
+#@reexport using MAT
 @reexport using FileIO
 @reexport using CSVFiles
 @reexport using GLM
@@ -17,7 +18,7 @@ using Reexport
 @reexport using DSP
 @reexport using Plots
 @reexport using StatsBase
-@reexport using DataArrays
+#@reexport using DataArrays
 @reexport using JuliaDBMeta
 @reexport using NaNMath
 

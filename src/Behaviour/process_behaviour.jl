@@ -84,12 +84,12 @@ function process_streaks(data::DataFrames.AbstractDataFrame; photometry = false)
         :Day,:Correct, :BlockCount, :Side, :Condition, :Block,
         :LastBlock, :ReverseStreak_n, :ExpDay, :Area];
     #println("Missing Columns $(setdiff(columns_list, names(data)))")
-    data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : contains.(data[:Reward],"true")
-    data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : contains.(data[:Stim],"true")
+    data[:Reward] = eltype(data[:Reward]) == Bool ? data[:Reward] : occursin.(data[:Reward],"true")
+    data[:Stim] = eltype(data[:Stim]) == Bool ? data[:Stim] : occursin.(data[:Stim],"true")
     streak_table = by(data, :Streak) do df
         dd = DataFrame(
         Num_pokes = size(df,1),
-        Num_Rewards = length(find(df[:Reward].==1)),
+        Num_Rewards = length(findall(df[:Reward].==1)),
         Start_Reward = df[1,:Reward],
         Last_Reward = findlast(df[:Reward] .== 1),
         Prev_Reward = findprev(df[:Reward] .==1, findlast(df[:Reward] .==1)-1),
@@ -148,7 +148,7 @@ function create_exp_dataframes(Raw_data_dir)
     DataIndex = process_pokes(DataIndex)
     pokes = concat_data!(DataIndex[:Preprocessed_Path])
     #pokes = check_fiberlocation(pokes,Exp_name)
-    mask = contains.(String.(names(pokes)),"_1")
+    mask = occursin.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
@@ -159,7 +159,7 @@ function create_exp_dataframes(Raw_data_dir)
     # FileIO.save(filetosave,pokes)
     streaks = process_streaks(pokes)
     #streaks = check_fiberlocation(streaks,Exp_name)
-    mask = contains.(String.(names(streaks)),"_1")
+    mask = occursin.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end
@@ -179,7 +179,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     protocol_calendar = create_exp_calendar(pokes,:Day,:Protocol)
     pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
     pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = contains.(String.(names(pokes)),"_1")
+    mask = occursin.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
@@ -191,7 +191,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     streaks = check_fiberlocation(streaks,Directory_path,Exp_name)
     streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = contains.(String.(names(streaks)),"_1")
+    mask = occursin.(String.(names(streaks)),"_1")
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end

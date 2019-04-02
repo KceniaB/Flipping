@@ -16,7 +16,7 @@ function verify_names(data::Array{Flipping.PhotometryStructure,1},field::Symbol)
        second = names(getfield(data[i-1], field))
        push!(verify,first != second)
    end
-   return find(verify)
+   return findall(verify)
 end
 
 """

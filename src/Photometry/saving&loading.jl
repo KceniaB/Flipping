@@ -48,7 +48,7 @@ function combine_PhotometryStructures(Single_Structures_folder::String; saving =
     step2 = replace(step1,"/"*basename(step1),"")
     Exp_name = basename(step2)
     files = readdir(Single_Structures_folder)
-    jls = contains.(files, ".jld2")
+    jls = occursin.(files, ".jld2")
     files = files[jls]
     Structure_pokes = Array{PhotometryStructure, 1}(0)
     for file in files
@@ -85,7 +85,7 @@ end
 #     Structure_folder = Directory_path*run_path*Exp_name*"/Structures/"
 #     Single_Structures_folder = joinpath(Structure_folder,"single_session")
 #     files = readdir(Single_Structures_folder)
-#     jls = contains.(files, ".jld2")
+#     jls = occursin.(files, ".jld2")
 #     files = files[jls]
 #     for file in files
 #         structure = carica(joinpath(Single_Structures_folder,file))

@@ -47,7 +47,7 @@ end
 `ghost_buster`
 """
 function ghost_buster(bhv,difference;dur_threshold = 0.1019999999999)
-    short_pokes = find(bhv[:PokeDur].<=dur_threshold)
+    short_pokes = findall(bhv[:PokeDur].<=dur_threshold)
     if size(short_pokes,1)!=0
         println("find n",size(short_pokes,1)," short pokes in Session ", bhv[1,:Session])
     end
@@ -57,13 +57,13 @@ function ghost_buster(bhv,difference;dur_threshold = 0.1019999999999)
         println("too many short pokes")
         if difference == 1
             println("trying to remove shortest poke")
-            targets = find(bhv[:PokeDur].== minimum(bhv[:PokeDur]))
+            targets = findall(bhv[:PokeDur].== minimum(bhv[:PokeDur]))
         end
     elseif size(short_pokes,1) == 0
         println("no short poke found")
         if difference == 1
             println("trying to remove shortest poke")
-            targets = find(bhv[:PokeDur].== minimum(bhv[:PokeDur]))
+            targets = findall(bhv[:PokeDur].== minimum(bhv[:PokeDur]))
         end
     else
         println("no solution found")
@@ -100,11 +100,11 @@ function events_buster(events,bhv)
             if size(ongoing_ev,1) != size(ongoing_bhv,1)
                 difference = size(ongoing_ev,1) - size(ongoing_bhv,1)
                 println("streak_n $(i) has $(difference) more pokes")
-                wrongpokes = find(ongoing_ev[:PokeDur] .== minimum(ongoing_ev[:PokeDur]))
+                wrongpokes = findall(ongoing_ev[:PokeDur] .== minimum(ongoing_ev[:PokeDur]))
                 push!(incorrect,wrongpokes)
                 for w in wrongpokes
                     w_P = ongoing_ev[w,:Poke]
-                    w_P_idx = find(events[:Poke].== w_P)
+                    w_P_idx = findall(events[:Poke].== w_P)
                     for x in [:Out,:Out_t]
                         events[w_P_idx,x] = events[w_P_idx+1,x]
                     end
@@ -159,7 +159,7 @@ function process_photo(DataIndex, idx;fps=50,NiDaq_rate=1000, onlystructure = tr
     #essential traces only Pokes signals and references
     Cols = names(trace);
     Columns = string.(Cols);
-    result = Columns[contains.(Columns,"_sig").|contains.(Columns,"_ref")]
+    result = Columns[occursin.(Columns,"_sig").|occursin.(Columns,"_ref")]
     # for channel in result
     #     cam[Symbol(channel)] = erase_bumps(cam[Symbol(channel)])
     # end
