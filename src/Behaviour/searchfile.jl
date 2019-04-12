@@ -55,7 +55,7 @@ Function that deals with the type of preprocessing Single exp folder or raw data
 """
 
 function find_behavior(Directory_path)
-    Dir = replace(Directory_path,basename(Directory_path),"")
+    Dir = replace(Directory_path,basename(Directory_path)=>"")
     saving_path = joinpath(Dir*"/Bhv/")
     if !ispath(saving_path)
         mkdir(saving_path)
