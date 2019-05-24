@@ -400,7 +400,6 @@ function create_exp_dataframes(Raw_data_dir)
     for x in[names(pokes)[mask]]
         delete!(pokes, x)
     end
-    pokes = Flipping.check_fiberlocation(pokes,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
     @save filetosave pokes
     streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
@@ -409,7 +408,6 @@ function create_exp_dataframes(Raw_data_dir)
     for x in[names(streaks)[mask]]
         delete!(streaks, x)
     end
-    streaks = Flipping.check_fiberlocation(streaks,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
     @save filetosave streaks
     return pokes, streaks, DataIndex
