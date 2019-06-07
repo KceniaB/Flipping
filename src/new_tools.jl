@@ -205,8 +205,8 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         Num_pokes = size(dd,1),
         Num_Rewards = length(findall(dd[:Reward].==1)),
         Start_Reward = dd[1,:Reward],
-        Last_Reward = findlast(dd[:Reward] .== 1).== nothing ? NaN : findlast(dd[:Reward] .== 1),
-        Prev_Reward = findlast(dd[:Reward] .== 1).== nothing ? NaN : findprev(dd[:Reward] .==1, findlast(dd[:Reward] .==1)-1),
+        Last_Reward = findlast(dd[:Reward] .== 1).== nothing ? 0 : findlast(dd[:Reward] .== 1),
+        Prev_Reward = findlast(dd[:Reward] .== 1).== nothing ? 0 : findprev(dd[:Reward] .==1, findlast(dd[:Reward] .==1)-1),
         Trial_duration = (dd[end,:PokeOut]-dd[1,:PokeIn]),
         Start = (dd[1,:PokeIn]),
         Stop = (dd[end,:PokeOut]),
@@ -228,7 +228,7 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         end
         return dt
     end
-    streak_table[:Prev_Reward] = [x .== nothing ? NaN : x for x in streak_table[:Prev_Reward]]
+    streak_table[:Prev_Reward] = [x .== nothing ? 0 : x for x in streak_table[:Prev_Reward]]
     streak_table[:AfterLast] = streak_table[:Num_pokes] .- streak_table[:Last_Reward];
     streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward].-1;
     prov = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop];
