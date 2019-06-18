@@ -151,12 +151,21 @@ function process_pokes(filepath::String)
         curr_data[:Wall] = zeros(size(curr_data,1))
     end
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall]#columns to convert to Bool
-    integers=[:Protocollo,:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:delta]; #columns to convert to Int64
     for x in booleans
         curr_data[x] = Bool.(curr_data[x])
     end
-    for x in integers
-        curr_data[x] = Int64.(curr_data[x])
+    if iscolumn(curr_data,:ProbVec0)
+        integers=[:Protocollo,:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:delta]; #columns to convert to Int64
+        for x in integers
+            curr_data[x] = Int64.(curr_data[x])
+        end
+        curr_data[:Protocol] = Flipping.get_protocollo(curr_data)
+        for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
+            deletecols!(curr_data, x)
+        end
+        curr_data[:StimFreq] = curr_data[:Stim] == 0 ? 25 : 0
+    elseif iscolumn(curr_data,:Prwd)
+        curr_data[:Protocol] = string(curr_data[:Prwd]) .* '/' .* string(curr_data[:Ptrs])
     end
     mouse, day, daily_session, session = session_info(filepath)
     curr_data[:MouseID] = mouse
@@ -165,7 +174,6 @@ function process_pokes(filepath::String)
     curr_data[:Session] = session
     curr_data[:Gen] = Flipping.gen.(curr_data[:MouseID])
     curr_data[:Drug] = Flipping.pharm.(curr_data[:Day])
-    curr_data[:Protocol] = Flipping.get_protocollo(curr_data)
     curr_data[:Stim_Day] = length(findall(curr_data[:Stim])) == 0 ? false : true
     curr_data[:Streak] = count_sequence(curr_data[:Side])
     curr_data[:ReverseStreak] = reverse(curr_data[:Streak])
@@ -184,9 +192,6 @@ function process_pokes(filepath::String)
         dd[:Streak_within_Block] = count_sequence(dd[:Side])
     end
     curr_data[:Correct] = curr_data[:Side] .== curr_data[:SideHigh]
-    for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
-        deletecols!(curr_data, x)
-    end
     return curr_data
 end
 
@@ -195,7 +200,7 @@ end
 """
 
 function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
-    columns_list = [:MouseID, :Gen, :Drug,:Day, :Stim_Day,:Condition, :ExpDay, :Area,:Session];
+    columns_list = [:MouseID, :Gen, :Drug,:Day, :Daily_Session, :Stim_Day,:Condition, :ExpDay, :Area,:Session];
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
     for x in booleans
         df[x] = eltype(df[x]) == Bool ? df[x] : occursin.(df[x],"true")
@@ -213,6 +218,7 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         InterPoke = maximum(dd[:InterPoke]),
         PokeSequence = [SVector{size(dd,1),Bool}(dd[:Reward])],
         Stim = dd[1,:Stim],
+        StimFreq = dd[1,:StimFreq],
         Wall = dd[1,:Wall],
         Protocol = dd[1,:Protocol],
         Correct = dd[1,:Correct],
@@ -372,7 +378,7 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     pokes = join(pokes, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     mask = occursin.(String.(names(pokes)),"_1")
     for x in[names(pokes)[mask]]
-        delete!(pokes, x)
+        deletecols!(pokes, x)
     end
     pokes = Flipping.check_fiberlocation(pokes,Directory_path,Exp_name)
     filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
