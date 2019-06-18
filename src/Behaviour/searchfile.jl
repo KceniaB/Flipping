@@ -308,10 +308,9 @@ function check_fiberlocation(data,Directory_path,Exp_name;run_path = "run_task_p
         fiberlocation = FileIO.load(filetofind) |>DataFrame;
         merged_data = join(data, fiberlocation, on = :Session, kind = :left,makeunique=true);
         println("found fibres location file, HAVE YOU UPDATED IT?")
+        return merged_data
     else
         println("no fibres location file")
-        merged_data = data;
+        return data
     end
-
-    return merged_data
 end
