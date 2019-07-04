@@ -164,6 +164,7 @@ function process_pokes(filepath::String)
             deletecols!(curr_data, x)
         end
         curr_data[:StimFreq] = curr_data[:Stim] == 0 ? 25 : 0
+        curr_data[:Box] = 0
     elseif iscolumn(curr_data,:Prwd)
         curr_data[:Protocol] = string(curr_data[:Prwd]) .* '/' .* string(curr_data[:Ptrs])
     end
@@ -200,7 +201,7 @@ end
 """
 
 function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
-    columns_list = [:MouseID, :Gen, :Drug,:Day, :Daily_Session, :Stim_Day,:Condition, :ExpDay, :Area,:Session];
+    columns_list = [:MouseID, :Gen, :Drug, :Day, :Daily_Session, :Box, :Stim_Day, :Condition, :ExpDay, :Area, :Session];
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
     for x in booleans
         df[x] = eltype(df[x]) == Bool ? df[x] : occursin.(df[x],"true")
