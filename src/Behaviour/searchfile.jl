@@ -49,6 +49,26 @@ function get_data(Dir::String)
 end
 
 """
+`create_DataIndex`
+create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
+or takes all the files in a folder
+"""
+function create_DataIndex(bhv)
+    string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}[a-z]{1}",bhv)
+    mask = string_search.!= nothing #remove files where there wasn't a match
+    string_search = string_search[mask]
+    bhv = bhv[mask]
+    string_result = [res.match for res in string_search if res !== nothing]
+    DataIndex = DataFrame(Bhv_Path = bhv)
+    DataIndex[:Session] = String.(string_result.*".csv")
+    DataIndex[:MouseID] = String.([split(t,"_")[1] for t in DataIndex[:Session]])
+    DataIndex[:Day] = String.(["20"*match.(r"\d{6}",t).match for t in DataIndex[:Session]])
+    DataIndex[:Period] = String.([match.(r"[a-z]{1}",t).match for t in DataIndex[:Session]])
+    return DataIndex
+end
+
+
+"""
 `find_behavior`
 Function that deals with the type of preprocessing Single exp folder or raw data folder
 
@@ -81,23 +101,6 @@ function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String
     return DataIndex
 end
 
-"""
-`create_DataIndex`
-create a Dataframe to identify the raw files to processed it has 2 methods, find files in run_task_photo/raw_data
-or takes all the files in a folder
-"""
-function create_DataIndex(bhv)
-    string_search = match.(r"[a-zA-Z]{2}\d+_\d{6}[a-z]{1}",bhv)
-    mask = string_search.!= nothing
-    string_search = string_search[mask]
-    bhv = bhv[mask]
-    string_result = [res.match for res in string_search if res !== nothing]
-    DataIndex = DataFrame(Bhv_Path = bhv)
-    DataIndex[:Session] = String.(string_result.*".csv")
-    DataIndex[:MouseID] = String.([split(t,"_")[1] for t in DataIndex[:Session]])
-    DataIndex[:Day] = String.(["20"*split(t,"_")[2] for t in DataIndex[:Session]])
-    return DataIndex
-end
 
 """
 `paths_dataframe`
@@ -108,9 +111,9 @@ function paths_dataframe(bhv)
     mask = occursin.(bhv,"txt")
     bhv = bhv[mask]
     ##### extract date and mouse ID per session using get_mousedate (it works with a full path)
-    MouseID = Array{String}(size(bhv,1))
-    Day = Array{String}(size(bhv,1))
-    Session = Array{String}(size(bhv,1))
+    MouseID = Vector{String}(undef, size(bhv,1))
+    Day = Vector{String}(undef, size(bhv,1))
+    Session = Vector{String}(undef, size(bhv,1))
     for i = 1:size(bhv,1)
         MouseID[i], Day[i], Session[i] = Flipping.get_BHVmousedate(bhv[i])
     end
@@ -214,7 +217,7 @@ function gatherfilesphotometry(Directory_path::String,Exp_name::String,Mice_suff
     saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name)
     cam = get_data(Camera_path,:cam)
     #use get_sessionname to select relevant session (for instance use exp naming code)
-    cam_session = map(t->get_sessionname(t,Mice_suffix),cam)
+    cam_session = map(t->Flipping.get_sessionname(t,Mice_suffix),cam)
     # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
     cam = cam[cam_session.!="start"]
     cam_session =cam_session[cam_session.!="start"]
@@ -224,76 +227,32 @@ function gatherfilesphotometry(Directory_path::String,Exp_name::String,Mice_suff
     camera[:Cam_Session]= cam_session;
     #extract date and mouse ID per session using get_mousedate (it works with a full path)
     # compose logAI file name from mat file
-    camera[:Log_Session]=[replace(f, ".mat", "_logAI.csv") for f in camera[:Cam_Session]];
-    camera[:Log_Path]=[replace(f, ".mat", "_logAI.csv") for f in camera[:Cam_Path]];
+    camera[:Log_Session]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Session]];
+    camera[:Log_Path]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Path]];
     #Identifies information from file name using get_mousedate function in a for loop
-    MouseID = Array{String}(size(camera,1))
-    Day2 = Array{Date}(size(camera,1))
-    Area = Array{String}(size(camera,1))
-    for i = collect(1:size(camera,1))
-        MouseID[i], Day2[i], Area[i] = get_CAMmousedate(camera[i,:Cam_Path],Mice_suffix)
-    end
-    camera[:MouseID] = MouseID
-    camera[:Day2] = Day2
-    camera[:Area] = Area
-    file_components = Array{String}(size(camera,1),2)
-    for i = 1:size(camera,1)
-        file_components[i,1] = String(split(camera[i,:Cam_Session], "_")[2])
-        file_components[i,2] = String(split(camera[i,:Cam_Session], "_")[3])
-    end
-    correct_date = Array{Date}(size(camera,1))
+    camera[:MouseID] = String.([split(t,"_")[1] for t in camera[:Cam_Session]])
+    camera[:Area] = String.([split(t,"_")[2] for t in camera[:Cam_Session]])
+    camera[:Day] = String.([match.(r"\d{8}",t).match for t in camera[:Cam_Path]])
     dformat = Dates.DateFormat("yyyymmdd")
-    for i = 1:size(camera,1)
-        try
-            correct_date[i]= Date(file_components[i,2],dformat)
-        catch;
-            correct_date[i] = Date(file_components[i,1],dformat)
-        end
-    end
-    camera[:Day] = correct_date;
-    exp_days = minimum(camera[:Day]):maximum(camera[:Day])
+    camera[:Day] = Date.(camera[:Day],dformat)
+    camera[:Period] = String.([match.(r"[a-z]{1}",t).match for t in camera[:Cam_Session]])
+    exp_days = minimum(camera[:Day]):Day(1):maximum(camera[:Day])
     good_days = [day for day in exp_days if ! (day in bad_days)];
     camera=camera[[(d in good_days) for d in camera[:Day]],:];
-    # use get_data function to obtain all filenames of behaviour
-    bhv = get_data(Behavior_path,:bhv)
-    #use get_sessionname to select relevant session (for instance use exp naming code)
-    bhv_session = map(t->get_sessionname(t,Mice_suffix),bhv)#to be changed for each dataframe
-    # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
-    bhv = bhv[bhv_session.!="start"]
-    bhv_session = bhv_session[bhv_session.!="start"]
-    #create a DataFrame suitable to compare behaviour and cam+log session
-    ###
-    behavior = DataFrame()
-    behavior[:Bhv_Path]= bhv
-    behavior[:Bhv_Session]= bhv_session
-    #extract date and mouse ID per session using get_mousedate (it works with a full path)
-    MouseID = Array{String}(size(behavior,1))
-    Day2 = Array{String}(size(behavior,1))
-    Area = Array{String}(size(behavior,1))
-    for i = collect(1:size(behavior,1))
-        MouseID[i], Day2[i], Area[i] = get_BHVmousedate(behavior[i,:Bhv_Path])
-    end
-    behavior[:MouseID] = MouseID
-    behavior[:Day2] = Day2#file properties are not reliable for the date of the session
-    behavior[:Day] = Date(Day2,"yyyymmdd")
+    behavior = Flipping.find_behavior(Directory_path, Exp_type,Exp_name, Mice_suffix)
+    rename!(behavior,:Session=>:Bhv_Session)
+    behavior[:Day] = Date.(behavior[:Day],dformat)
     behavior = behavior[[(bho in good_days) for bho in behavior[:Day]],:];
     println("accordance between cam and behavior dates");
     println(sort(union(behavior[:Day])) == sort(union(camera[:Day])));
     if sort(union(behavior[:Day])) != sort(union(camera[:Day]))
         println(symdiff(sort(union(camera[:Day])),sort(union(behavior[:Day]))))
     end
-    DataIndex = join(camera, behavior, on = [:MouseID, :Day], kind = :inner, makeunique = true);
-    provisory = [] #create general session field
-    for x in DataIndex[:Bhv_Session]
-        push!(provisory,replace(x,"a.csv",""))
-    end
+    DataIndex = join(camera, behavior, on = [:MouseID, :Day, :Period], kind = :inner, makeunique = true)
     DataIndex[:Saving_path] = saving_path
-    DataIndex[:Exp_Path]= replace(Camera_path,"Cam/","")
-    DataIndex[:Exp_Name]=String(split(DataIndex[1,:Exp_Path],"/")[end-1])
-    DataIndex[:Session] = provisory
-    for x in[:Day2,:Day2_1]
-        delete!(DataIndex, x)
-    end
+    DataIndex[:Exp_Path]= replace(Camera_path,"Cam/"=>"")
+    DataIndex[:Exp_Name]= String(split(DataIndex[1,:Exp_Path],"/")[end-1])
+    DataIndex[:Session] = [replace(t,"a.csv"=>"") for t in DataIndex[:Bhv_Session]]
     return DataIndex
 end
 
