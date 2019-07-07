@@ -2,7 +2,10 @@ module Flipping
 using Reexport
 @reexport using Statistics
 @reexport using DataFrames
+<<<<<<< HEAD
 @reexport using MAT
+=======
+>>>>>>> 285a512e1b4c8802d81fd0d80b038017f0d61674
 @reexport using FileIO
 @reexport using CSVFiles
 @reexport using GLM
@@ -19,11 +22,11 @@ using Reexport
 @reexport using Dates
 
 include("class.jl")
-include("tools.jl")
+#include("tools.jl")
 include("new_tools.jl")
 include("saving&loading.jl")
 #include(joinpath("Behaviour","process_behaviour.jl"))
-include(joinpath("Behaviour","searchfile.jl"))
+include("searchfile.jl")
 include(joinpath("Photometry","bhv_photo_combine.jl"))
 include(joinpath("Photometry","acquire_photo.jl"))
 include(joinpath("Photometry","tools_photo.jl"))
