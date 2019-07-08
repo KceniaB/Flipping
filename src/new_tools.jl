@@ -83,13 +83,13 @@ relative Gamma and Probability are infered by the respective GammaVec and ProbVe
 """
 function get_protocollo(df)
     ProtName = String[]
-    for i = collect(1:size(df,1))
+    for i in 1:size(df,1)
         #in the original data protocol are labeled either 0 or 1
         #this function collapse the respective gamma and prob in a string
-        if df[i,:Protocollo]==0
+        if df[i,:Protocollo] == 0
             curr_prot = string(df[i,:ProbVec0],"/",df[i,:GamVec0])
             push!(ProtName,curr_prot)
-        elseif df[i,:Protocollo]==1
+        elseif df[i,:Protocollo] == 1
             curr_prot = string(df[i,:ProbVec1],"/",df[i,:GamVec1])
             push!(ProtName,curr_prot)
         end
@@ -166,7 +166,7 @@ function process_pokes(filepath::String)
         curr_data[:StimFreq] = curr_data[:Stim] == 0 ? 25 : 0
         curr_data[:Box] = 0
     elseif iscolumn(curr_data,:Prwd)
-        curr_data[:Protocol] = string(curr_data[:Prwd]) .* '/' .* string(curr_data[:Ptrs])
+        curr_data[:Protocol] = string.(curr_data[:Prwd],'/',curr_data[:Ptrs])
     end
     mouse, day, daily_session, session = session_info(filepath)
     curr_data[:MouseID] = mouse

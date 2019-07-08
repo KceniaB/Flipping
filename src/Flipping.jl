@@ -2,10 +2,7 @@ module Flipping
 using Reexport
 @reexport using Statistics
 @reexport using DataFrames
-<<<<<<< HEAD
 @reexport using MAT
-=======
->>>>>>> 285a512e1b4c8802d81fd0d80b038017f0d61674
 @reexport using FileIO
 @reexport using CSVFiles
 @reexport using GLM
