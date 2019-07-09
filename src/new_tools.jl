@@ -154,6 +154,7 @@ function process_pokes(filepath::String)
     for x in booleans
         curr_data[x] = Bool.(curr_data[x])
     end
+    curr_data[:Side] = [a ? "L" : "R" for a in curr_data[:Side]]
     if iscolumn(curr_data,:ProbVec0)
         integers=[:Protocollo,:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:delta]; #columns to convert to Int64
         for x in integers
@@ -163,7 +164,10 @@ function process_pokes(filepath::String)
         for x in[:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Protocollo]
             deletecols!(curr_data, x)
         end
-        curr_data[:StimFreq] = curr_data[:Stim] == 0 ? 25 : 0
+        if !iscolumn(curr_data,:StimFreq)
+            curr_data[:StimFreq] = repeat([50],size(curr_data,1))
+        end
+        curr_data[:StimFreq] = [a == 50 ? 25 : a  for a in curr_data[:Stim]]
         curr_data[:Box] = 0
     elseif iscolumn(curr_data,:Prwd)
         curr_data[:Protocol] = string.(curr_data[:Prwd],'/',curr_data[:Ptrs])
@@ -366,8 +370,8 @@ end
 `create_exp_dataframes`
 """
 
-function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String, Mice_suffix::String)
-    DataIndex = Flipping.find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
+function create_exp_dataframes(DataIndex::DataFrames.AbstractDataFrame)
+    exp_dir = DataIndex[1,:Saving_path]
     pokes, streaks = process_sessions(DataIndex)
     exp_calendar = by(pokes,:MouseID) do dd
         Flipping.create_exp_calendar(dd,:Day)
@@ -381,8 +385,8 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     for x in[names(pokes)[mask]]
         deletecols!(pokes, x)
     end
-    pokes = Flipping.check_fiberlocation(pokes,Directory_path,Exp_name)
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
+    pokes = Flipping.check_fiberlocation(pokes,exp_dir)
+    filetosave = joinpath(exp_dir,"pokes"*splitdir(exp_dir)[end]*".jld2")
     @save filetosave pokes
     streaks = join(streaks, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
@@ -390,32 +394,39 @@ function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name:
     for x in[names(streaks)[mask]]
         deletecols!(streaks, x)
     end
-    streaks = Flipping.check_fiberlocation(streaks,Directory_path,Exp_name)
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
+    streaks = Flipping.check_fiberlocation(streaks,exp_dir)
+    filetosave = joinpath(exp_dir,"streaks"*splitdir(exp_dir)[end]*".jld2")
     @save filetosave streaks
     return pokes, streaks, DataIndex
 end
 
-function create_exp_dataframes(Raw_data_dir)
+function create_exp_dataframes(Directory_path::String,Exp_type::String,Exp_name::String, Mice_suffix::String)
+    DataIndex = Flipping.find_behavior(Directory_path, Exp_type, Exp_name,Mice_suffix)
+    create_exp_dataframes(DataIndex)
+end
+
+
+function create_exp_dataframes(Raw_data_dir::String)
     DataIndex = Flipping.find_behavior(Raw_data_dir)
-    pokes, streaks = process_sessions(DataIndex)
-    exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
-    protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
-    pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = occursin.(String.(names(pokes)),"_1")
-    for x in[names(pokes)[mask]]
-        delete!(pokes, x)
-    end
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
-    @save filetosave pokes
-    streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    mask = occursin.(String.(names(streaks)),"_1")
-    for x in[names(streaks)[mask]]
-        delete!(streaks, x)
-    end
-    filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
-    @save filetosave streaks
-    return pokes, streaks, DataIndex
+    create_exp_dataframes(DataIndex)
+    # pokes, streaks = process_sessions(DataIndex)
+    # exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
+    # protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
+    # pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
+    # pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    # mask = occursin.(String.(names(pokes)),"_1")
+    # for x in[names(pokes)[mask]]
+    #     delete!(pokes, x)
+    # end
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
+    # @save filetosave pokes
+    # streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
+    # streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
+    # mask = occursin.(String.(names(streaks)),"_1")
+    # for x in[names(streaks)[mask]]
+    #     delete!(streaks, x)
+    # end
+    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
+    # @save filetosave streaks
+    # return pokes, streaks, DataIndex
 end
