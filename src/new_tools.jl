@@ -244,20 +244,20 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
     streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward].-1;
     prov = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop];
     streak_table[:Travel_to]  = [x.< 0 ? 0 : x for x in prov]
-    if photometry
-        frames = by(df, :Streak) do df
-            dd = DataFrame(
-            In = df[1,:In],
-            Out = df[end,:Out],
-            LR_In = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:In],
-            LR_Out = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:Out]
-            )
-        end
-        streak_table[:In] = frames[:In]
-        streak_table[:Out] = frames[:Out]
-        streak_table[:LR_In] = frames[:LR_In]
-        streak_table[:LR_Out] = frames[:LR_Out]
-    end
+    # if photometry
+    #     frames = by(df, :Streak) do df
+    #         dd = DataFrame(
+    #         In = df[1,:In],
+    #         Out = df[end,:Out],
+    #         LR_In = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:In],
+    #         LR_Out = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:Out]
+    #         )
+    #     end
+    #     streak_table[:In] = frames[:In]
+    #     streak_table[:Out] = frames[:Out]
+    #     streak_table[:LR_In] = frames[:LR_In]
+    #     streak_table[:LR_Out] = frames[:LR_Out]
+    # end
 
     return streak_table
 end

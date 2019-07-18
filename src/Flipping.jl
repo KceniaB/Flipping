@@ -12,7 +12,7 @@ using Reexport
 @reexport using JLD2
 @reexport using StaticArrays
 @reexport using DSP
-@reexport using Plots
+#@reexport using Plots
 @reexport using StatsBase
 @reexport using JuliaDBMeta
 @reexport using NaNMath
@@ -24,10 +24,10 @@ include("new_tools.jl")
 include("saving&loading.jl")
 #include(joinpath("Behaviour","process_behaviour.jl"))
 include("searchfile.jl")
-include(joinpath("Photometry","bhv_photo_combine.jl"))
-include(joinpath("Photometry","acquire_photo.jl"))
-include(joinpath("Photometry","tools_photo.jl"))
-include(joinpath("Photometry","saving&loading.jl"))
+# include(joinpath("Photometry","bhv_photo_combine.jl"))
+# include(joinpath("Photometry","acquire_photo.jl"))
+# include(joinpath("Photometry","tools_photo.jl"))
+# include(joinpath("Photometry","saving&loading.jl"))
 
 
 
