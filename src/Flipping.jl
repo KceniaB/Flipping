@@ -16,7 +16,7 @@ using Reexport
 @reexport using StatsBase
 @reexport using JuliaDBMeta
 @reexport using NaNMath
-@reexport using Dates
+@reexport using Datesadd Tablke
 
 include("class.jl")
 #include("tools.jl")
