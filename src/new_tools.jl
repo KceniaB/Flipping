@@ -414,24 +414,4 @@ end
 function create_exp_dataframes(Raw_data_dir::String)
     DataIndex = Flipping.find_behavior(Raw_data_dir)
     create_exp_dataframes(DataIndex)
-    # pokes, streaks = process_sessions(DataIndex)
-    # exp_calendar = Flipping.create_exp_calendar(pokes,:Day)
-    # protocol_calendar = Flipping.create_exp_calendar(pokes,:Day,:Protocol)
-    # pokes = join(pokes, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    # pokes = join(pokes, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    # mask = occursin.(String.(names(pokes)),"_1")
-    # for x in[names(pokes)[mask]]
-    #     delete!(pokes, x)
-    # end
-    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/pokes"*Exp_name*".jld2"
-    # @save filetosave pokes
-    # streaks = join(streaks, exp_calendar, on = :Day, kind = :inner,makeunique=true);
-    # streaks = join(streaks, protocol_calendar, on = :Day, kind = :inner,makeunique=true);
-    # mask = occursin.(String.(names(streaks)),"_1")
-    # for x in[names(streaks)[mask]]
-    #     delete!(streaks, x)
-    # end
-    # filetosave = Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/streaks"*Exp_name*".jld2"
-    # @save filetosave streaks
-    # return pokes, streaks, DataIndex
 end
