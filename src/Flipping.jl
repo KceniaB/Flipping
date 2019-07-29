@@ -19,15 +19,10 @@ using Reexport
 @reexport using Dates
 
 include("class.jl")
-#include("tools.jl")
 include("new_tools.jl")
 include("saving&loading.jl")
-#include(joinpath("Behaviour","process_behaviour.jl"))
 include("searchfile.jl")
-# include(joinpath("Photometry","bhv_photo_combine.jl"))
-# include(joinpath("Photometry","acquire_photo.jl"))
-# include(joinpath("Photometry","tools_photo.jl"))
-# include(joinpath("Photometry","saving&loading.jl"))
+
 
 
 
