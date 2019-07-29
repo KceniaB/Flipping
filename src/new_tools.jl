@@ -244,20 +244,20 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
     streak_table[:BeforeLast] = streak_table[:Last_Reward] .- streak_table[:Prev_Reward].-1;
     prov = lead(streak_table[:Start],default = 0.0) .- streak_table[:Stop];
     streak_table[:Travel_to]  = [x.< 0 ? 0 : x for x in prov]
-    # if photometry
-    #     frames = by(df, :Streak) do df
-    #         dd = DataFrame(
-    #         In = df[1,:In],
-    #         Out = df[end,:Out],
-    #         LR_In = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:In],
-    #         LR_Out = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:Out]
-    #         )
-    #     end
-    #     streak_table[:In] = frames[:In]
-    #     streak_table[:Out] = frames[:Out]
-    #     streak_table[:LR_In] = frames[:LR_In]
-    #     streak_table[:LR_Out] = frames[:LR_Out]
-    # end
+    if photometry
+        frames = by(df, :Streak) do df
+            dd = DataFrame(
+            In = df[1,:In],
+            Out = df[end,:Out],
+            LR_In = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:In],
+            LR_Out = findlast(df[:Reward])==0 ? NaN : df[findlast(df[:Reward]),:Out]
+            )
+        end
+        streak_table[:In] = frames[:In]
+        streak_table[:Out] = frames[:Out]
+        streak_table[:LR_In] = frames[:LR_In]
+        streak_table[:LR_Out] = frames[:LR_Out]
+    end
 
     return streak_table
 end
@@ -388,6 +388,8 @@ function create_exp_dataframes(DataIndex::DataFrames.AbstractDataFrame)
     pokes = Flipping.check_fiberlocation(pokes,exp_dir)
     filetosave = joinpath(exp_dir,"pokes"*splitdir(exp_dir)[end]*".jld2")
     @save filetosave pokes
+    filetosave = joinpath(exp_dir,"pokes"*splitdir(exp_dir)[end]*".csv")
+    CSVFiles.save(filetosave,pokes)
     streaks = join(streaks, exp_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     streaks = join(streaks, protocol_calendar, on = [:MouseID,:Day], kind = :inner,makeunique=true);
     mask = occursin.(String.(names(streaks)),"_1")
@@ -397,6 +399,9 @@ function create_exp_dataframes(DataIndex::DataFrames.AbstractDataFrame)
     streaks = Flipping.check_fiberlocation(streaks,exp_dir)
     filetosave = joinpath(exp_dir,"streaks"*splitdir(exp_dir)[end]*".jld2")
     @save filetosave streaks
+    simple = delete!(streaks,:PokeSequence)
+    filetosave = joinpath(exp_dir,"streaks"*splitdir(exp_dir)[end]*".csv")
+    CSVFiles.save(filetosave,simple)
     return pokes, streaks, DataIndex
 end
 
