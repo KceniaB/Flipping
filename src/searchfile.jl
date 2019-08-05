@@ -76,28 +76,35 @@ Function that deals with the type of preprocessing Single exp folder or raw data
 
 function find_behavior(Directory_path)
     Dir = replace(Directory_path,basename(Directory_path)=>"")
-    saving_path = joinpath(Dir*"/Bhv/")
+    saving_path = joinpath(Directory_path,"Bhv")
     if !ispath(saving_path)
         mkdir(saving_path)
     end
     bhv = get_data(Directory_path);
     DataIndex = create_DataIndex(bhv);
     DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    results_path = joinpath(Directory_path,"Results")
+    if !ispath(results_path)
+        mkdir(results_path)
+    end
+    DataIndex[:Saving_path] = results_path
     return DataIndex
 end
 
 function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
-    rawdata_path = joinpath(Directory_path*"run_task_photo/raw_data")
-    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name*"/Bhv/")
+    rawdata_path = joinpath(Directory_path,"run_task_photo/raw_data")
+    saving_path = joinpath(Directory_path,"Datasets",Exp_type,Exp_name,"Bhv")
+    exp_dir =
     if !ispath(saving_path)
-        if !ispath(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
-            mkdir(joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name))
+        if !ispath(joinpath(Directory_path,"Datasets",Exp_type,Exp_name))
+            mkdir(joinpath(Directory_path,"Datasets",Exp_type,Exp_name))
         end
         mkdir(saving_path)
     end
     bhv = get_data(rawdata_path, Mice_suffix);
     DataIndex = create_DataIndex(bhv);
     DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
+    DataIndex[:Saving_path] = joinpath(Directory_path,"Datasets",Exp_type,Exp_name)
     return DataIndex
 end
 

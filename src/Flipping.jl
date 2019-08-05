@@ -12,7 +12,6 @@ using Reexport
 @reexport using JLD2
 @reexport using StaticArrays
 @reexport using DSP
-#@reexport using Plots
 @reexport using StatsBase
 @reexport using JuliaDBMeta
 @reexport using NaNMath
