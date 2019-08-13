@@ -183,12 +183,15 @@ function process_pokes(filepath::String)
     curr_data[:Streak] = count_sequence(curr_data[:Side])
     curr_data[:ReverseStreak] = reverse(curr_data[:Streak])
     curr_data[:Poke_within_Streak] = 0
-    curr_data[:InterPoke] = 0.0
     curr_data[:Poke_Hierarchy] = 0.0
+    curr_data[:Pre_Interpoke] = Vector{Union{Float64,Missing}}(undef,size(curr_data,1))
+    curr_data[:Post_Interpoke] = Vector{Union{Float64,Missing}}(undef,size(curr_data,1))
     by(curr_data,:Streak) do dd
         dd[:Poke_within_Streak] = count_sequence(dd[:Poke])
-        prov = lead(dd[:PokeIn],default = 0.0) .- dd[:PokeOut]
-        dd[:InterPoke]  = [x.< 0 ? 0 : x for x in prov]
+        dd[:Pre_Interpoke] =  dd[:PokeIn] .-lag(dd[:PokeOut],default = missing)
+        dd[:Post_Interpoke] = lead(dd[:PokeIn],default = missing).- dd[:PokeOut]
+        # prov = lead(dd[:PokeIn],default = 0.0) .- dd[:PokeOut]
+        # dd[:InterPoke]  = [x.< 0 ? 0 : x for x in prov]
         dd[:Poke_Hierarchy] = Flipping.get_hierarchy(dd[:Reward])
     end
     curr_data[:Block] = count_sequence(curr_data[:Wall])
@@ -220,7 +223,8 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         Trial_duration = (dd[end,:PokeOut]-dd[1,:PokeIn]),
         Start = (dd[1,:PokeIn]),
         Stop = (dd[end,:PokeOut]),
-        InterPoke = maximum(dd[:InterPoke]),
+        Pre_Interpoke = maximum(dd[:Pre_Interpoke]),
+        Post_Interpoke = maximum(dd[:Post_Interpoke]),
         PokeSequence = [SVector{size(dd,1),Bool}(dd[:Reward])],
         Stim = dd[1,:Stim],
         StimFreq = dd[1,:StimFreq],
