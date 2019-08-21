@@ -141,7 +141,12 @@ get_hierarchy(v) = lag(signedcount(v), default = NaN)
 
 function process_pokes(filepath::String)
     curr_data = FileIO.load(filepath) |> DataFrame
-    rename!(curr_data, Symbol("") => :Poke) #change poke counter name
+    if !in(:Poke,names(curr_data))
+        rename!(curr_data, Symbol("") => :Poke) #change poke counter name
+    end
+    if in(:delta,names(curr_data))
+        rename!(curr_data, :delta => :Delta)
+    end
     curr_data[:Poke] = curr_data[:Poke].+1
     start_time = curr_data[1,:PokeIn]
     curr_data[:PokeIn] = curr_data[:PokeIn] .- start_time
@@ -152,11 +157,19 @@ function process_pokes(filepath::String)
     end
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall]#columns to convert to Bool
     for x in booleans
-        curr_data[x] = Bool.(curr_data[x])
+        if curr_data[1,x] isa AbstractString
+            try
+                curr_data[x] = parse.(Bool,curr_data[x])#Bool.(curr_data[x])
+            catch
+                continue
+            end
+        elseif curr_data[1,x] isa Real
+            curr_data[x] = Bool.(curr_data[x])
+        end
     end
     curr_data[:Side] = [a ? "L" : "R" for a in curr_data[:Side]]
     if iscolumn(curr_data,:ProbVec0)
-        integers=[:Protocollo,:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:delta]; #columns to convert to Int64
+        integers=[:Protocollo,:ProbVec0,:ProbVec1,:GamVec0,:GamVec1,:Delta]; #columns to convert to Int64
         for x in integers
             curr_data[x] = Int64.(curr_data[x])
         end
@@ -199,6 +212,7 @@ function process_pokes(filepath::String)
     by(curr_data,:Block) do dd
         dd[:Streak_within_Block] = count_sequence(dd[:Side])
     end
+    curr_data[:SideHigh] = [x ? "L" : "R" for x in curr_data[:SideHigh]]
     curr_data[:Correct] = curr_data[:Side] .== curr_data[:SideHigh]
     return curr_data
 end
@@ -223,14 +237,15 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
         Trial_duration = (dd[end,:PokeOut]-dd[1,:PokeIn]),
         Start = (dd[1,:PokeIn]),
         Stop = (dd[end,:PokeOut]),
-        Pre_Interpoke = maximum(dd[:Pre_Interpoke]),
-        Post_Interpoke = maximum(dd[:Post_Interpoke]),
+        Pre_Interpoke = size(dd,1) > 1 ? maximum(skipmissing(dd[:Pre_Interpoke])) : missing,
+        Post_Interpoke = size(dd,1) > 1 ? maximum(skipmissing(dd[:Post_Interpoke])) : missing,
         PokeSequence = [SVector{size(dd,1),Bool}(dd[:Reward])],
         Stim = dd[1,:Stim],
         StimFreq = dd[1,:StimFreq],
         Wall = dd[1,:Wall],
         Protocol = dd[1,:Protocol],
-        Correct = dd[1,:Correct],
+        Correct_start = dd[1,:Correct],
+        Correct_leave = !dd[end,:Correct],
         Block = dd[1,:Block],
         Streak_within_Block = dd[1,:Streak_within_Block],
         Side = dd[1,:Side],
@@ -287,7 +302,7 @@ function process_sessions(DataIndex::DataFrames.AbstractDataFrame)
             b=b+1
         else
             pokes_data = FileIO.load(filetosave)|> DataFrame
-            booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
+            booleans=[:Reward,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool removed :Side,:SideHigh
             for x in booleans
                 pokes_data[x] = eltype(pokes_data[x]) == Bool ? pokes_data[x] : occursin.(pokes_data[x],"true")
             end
