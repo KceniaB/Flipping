@@ -94,17 +94,17 @@ end
 function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
     rawdata_path = joinpath(Directory_path,"run_task_photo/raw_data")
     saving_path = joinpath(Directory_path,"Datasets",Exp_type,Exp_name,"Bhv")
-    exp_dir =
+    exp_ dir = joinpath(Directory_path,"Datasets",Exp_type,Exp_name)
     if !ispath(saving_path)
-        if !ispath(joinpath(Directory_path,"Datasets",Exp_type,Exp_name))
-            mkdir(joinpath(Directory_path,"Datasets",Exp_type,Exp_name))
+        if !ispath(exp_ dir)
+            mkdir(exp_ dir)
         end
         mkdir(saving_path)
     end
     bhv = get_data(rawdata_path, Mice_suffix);
     DataIndex = create_DataIndex(bhv);
     DataIndex[:Preprocessed_Path] = saving_path.*DataIndex[:Session]
-    DataIndex[:Saving_path] = joinpath(Directory_path,"Datasets",Exp_type,Exp_name)
+    DataIndex[:Saving_path] = joinpath(saving_path,"Bhv")
     return DataIndex
 end
 
@@ -198,72 +198,6 @@ function get_session(filepath,what::String)
 end
 
 """
-`get_CAMmousedate(filepath, pattern)`
-
-it extract the session name by pattern match:
-It assumes that the date of the creation of the file is the day of the session
-"""
-function get_CAMmousedate(filepath, pattern)
-    fileinfo = get_sessionname(filepath,pattern)
-    mouse, note = split(fileinfo, "_")[1:2]# decompose the file name by _ and take the first as animal name
-    #and the second as extra experimental note, like target area
-    date = Dates.Date(Dates.unix2datetime(ctime(filepath)))#return the date from file properties,
-    #convert it from unix to normal time and take only the date
-    mouse = String(mouse)
-    note = String(mouse)
-    return mouse, date, note
-end
-
-
-"""
-`gatherfilesphotometry`
-"""
-function gatherfilesphotometry(Directory_path::String,Exp_name::String,Mice_suffix::String,Exp_type::String,bad_days)
-    Camera_path = Directory_path*"run_task_photo/"*Exp_name*"/Cam/"
-    Behavior_path = joinpath(Directory_path*"run_task_photo/raw_data")
-    saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name)
-    cam = get_data(Camera_path,:cam)
-    #use get_sessionname to select relevant session (for instance use exp naming code)
-    cam_session = map(t->Flipping.get_sessionname(t,Mice_suffix),cam)
-    # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
-    cam = cam[cam_session.!="start"]
-    cam_session =cam_session[cam_session.!="start"]
-    #create a DataFrame suitable to compare behaviour and cam+log session
-    camera = DataFrame()
-    camera[:Cam_Path]= cam
-    camera[:Cam_Session]= cam_session;
-    #extract date and mouse ID per session using get_mousedate (it works with a full path)
-    # compose logAI file name from mat file
-    camera[:Log_Session]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Session]];
-    camera[:Log_Path]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Path]];
-    #Identifies information from file name using get_mousedate function in a for loop
-    camera[:MouseID] = String.([split(t,"_")[1] for t in camera[:Cam_Session]])
-    camera[:Area] = String.([split(t,"_")[2] for t in camera[:Cam_Session]])
-    camera[:Day] = String.([match.(r"\d{8}",t).match for t in camera[:Cam_Path]])
-    dformat = Dates.DateFormat("yyyymmdd")
-    camera[:Day] = Date.(camera[:Day],dformat)
-    camera[:Period] = String.([match.(r"[a-z]{1}",t).match for t in camera[:Cam_Session]])
-    exp_days = minimum(camera[:Day]):Day(1):maximum(camera[:Day])
-    good_days = [day for day in exp_days if ! (day in bad_days)];
-    camera=camera[[(d in good_days) for d in camera[:Day]],:];
-    behavior = Flipping.find_behavior(Directory_path, Exp_type,Exp_name, Mice_suffix)
-    rename!(behavior,:Session=>:Bhv_Session)
-    behavior[:Day] = Date.(behavior[:Day],dformat)
-    behavior = behavior[[(bho in good_days) for bho in behavior[:Day]],:];
-    println("accordance between cam and behavior dates");
-    println(sort(union(behavior[:Day])) == sort(union(camera[:Day])));
-    if sort(union(behavior[:Day])) != sort(union(camera[:Day]))
-        println(symdiff(sort(union(camera[:Day])),sort(union(behavior[:Day]))))
-    end
-    DataIndex = join(camera, behavior, on = [:MouseID, :Day, :Period], kind = :inner, makeunique = true)
-    DataIndex[:Saving_path] = saving_path
-    DataIndex[:Exp_Path]= replace(Camera_path,"Cam/"=>"")
-    DataIndex[:Exp_Name]= String(split(DataIndex[1,:Exp_Path],"/")[end-1])
-    DataIndex[:Session] = [replace(t,"a.csv"=>"") for t in DataIndex[:Bhv_Session]]
-    return DataIndex
-end
-
-"""
 `check_fiberlocation`
 
 look for a dataset where fiberlocation across day is stored
@@ -286,3 +220,71 @@ function check_fiberlocation(data,Directory_path,Exp_name;run_path = "run_task_p
     exp_dir = joinpath(Directory_path*run_path*Exp_name)
     check_fiberlocation(data,exp_dir)
 end
+
+
+#
+# """
+# `get_CAMmousedate(filepath, pattern)`
+#
+# it extract the session name by pattern match:
+# It assumes that the date of the creation of the file is the day of the session
+# """
+# function get_CAMmousedate(filepath, pattern)
+#     fileinfo = get_sessionname(filepath,pattern)
+#     mouse, note = split(fileinfo, "_")[1:2]# decompose the file name by _ and take the first as animal name
+#     #and the second as extra experimental note, like target area
+#     date = Dates.Date(Dates.unix2datetime(ctime(filepath)))#return the date from file properties,
+#     #convert it from unix to normal time and take only the date
+#     mouse = String(mouse)
+#     note = String(mouse)
+#     return mouse, date, note
+# end
+
+#
+# """
+# `gatherfilesphotometry`
+# """
+# function gatherfilesphotometry(Directory_path::String,Exp_name::String,Mice_suffix::String,Exp_type::String,bad_days)
+#     Camera_path = Directory_path*"run_task_photo/"*Exp_name*"/Cam/"
+#     Behavior_path = joinpath(Directory_path*"run_task_photo/raw_data")
+#     saving_path = joinpath(Directory_path*"Datasets/"*Exp_type*"/"*Exp_name)
+#     cam = get_data(Camera_path,:cam)
+#     #use get_sessionname to select relevant session (for instance use exp naming code)
+#     cam_session = map(t->Flipping.get_sessionname(t,Mice_suffix),cam)
+#     # get_sessionname return a start result for sessions that don't match the criteria this can be used to prune irrelevant paths
+#     cam = cam[cam_session.!="start"]
+#     cam_session =cam_session[cam_session.!="start"]
+#     #create a DataFrame suitable to compare behaviour and cam+log session
+#     camera = DataFrame()
+#     camera[:Cam_Path]= cam
+#     camera[:Cam_Session]= cam_session;
+#     #extract date and mouse ID per session using get_mousedate (it works with a full path)
+#     # compose logAI file name from mat file
+#     camera[:Log_Session]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Session]];
+#     camera[:Log_Path]=[replace(f, ".mat"=>"_logAI.csv") for f in camera[:Cam_Path]];
+#     #Identifies information from file name using get_mousedate function in a for loop
+#     camera[:MouseID] = String.([split(t,"_")[1] for t in camera[:Cam_Session]])
+#     camera[:Area] = String.([split(t,"_")[2] for t in camera[:Cam_Session]])
+#     camera[:Day] = String.([match.(r"\d{8}",t).match for t in camera[:Cam_Path]])
+#     dformat = Dates.DateFormat("yyyymmdd")
+#     camera[:Day] = Date.(camera[:Day],dformat)
+#     camera[:Period] = String.([match.(r"[a-z]{1}",t).match for t in camera[:Cam_Session]])
+#     exp_days = minimum(camera[:Day]):Day(1):maximum(camera[:Day])
+#     good_days = [day for day in exp_days if ! (day in bad_days)];
+#     camera=camera[[(d in good_days) for d in camera[:Day]],:];
+#     behavior = Flipping.find_behavior(Directory_path, Exp_type,Exp_name, Mice_suffix)
+#     rename!(behavior,:Session=>:Bhv_Session)
+#     behavior[:Day] = Date.(behavior[:Day],dformat)
+#     behavior = behavior[[(bho in good_days) for bho in behavior[:Day]],:];
+#     println("accordance between cam and behavior dates");
+#     println(sort(union(behavior[:Day])) == sort(union(camera[:Day])));
+#     if sort(union(behavior[:Day])) != sort(union(camera[:Day]))
+#         println(symdiff(sort(union(camera[:Day])),sort(union(behavior[:Day]))))
+#     end
+#     DataIndex = join(camera, behavior, on = [:MouseID, :Day, :Period], kind = :inner, makeunique = true)
+#     DataIndex[:Saving_path] = saving_path
+#     DataIndex[:Exp_Path]= replace(Camera_path,"Cam/"=>"")
+#     DataIndex[:Exp_Name]= String(split(DataIndex[1,:Exp_Path],"/")[end-1])
+#     DataIndex[:Session] = [replace(t,"a.csv"=>"") for t in DataIndex[:Bhv_Session]]
+#     return DataIndex
+# end
