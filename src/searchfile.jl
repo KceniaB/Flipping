@@ -94,10 +94,10 @@ end
 function find_behavior(Directory_path::String, Exp_type::String,Exp_name::String, Mice_suffix ::String)
     rawdata_path = joinpath(Directory_path,"run_task_photo/raw_data")
     saving_path = joinpath(Directory_path,"Datasets",Exp_type,Exp_name,"Bhv")
-    exp_ dir = joinpath(Directory_path,"Datasets",Exp_type,Exp_name)
+    exp_dir = joinpath(Directory_path,"Datasets",Exp_type,Exp_name)
     if !ispath(saving_path)
-        if !ispath(exp_ dir)
-            mkdir(exp_ dir)
+        if !ispath(exp_dir)
+            mkdir(exp_dir)
         end
         mkdir(saving_path)
     end
