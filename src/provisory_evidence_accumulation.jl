@@ -2,7 +2,6 @@ using Flipping
 using LsqFit
 using GroupedErrors
 using StatsPlots
-using Query
 
 ##colors
 c9090 = RGBA(108/255,218/255,165/255)#RGBA(181/255,94/255,50/255)
@@ -37,7 +36,6 @@ function rec_lr_with_uncertainty(n_fail, Prew, Psw, α; E1 = 1)
     end
     return Es
 end
-##
 #Probability of being in the correct side after n_fail consecutive failures, requires to compute rec_lr
 function Pwrong(evidence_accumulation)
     evidence_accumulation ./ (1 .+ evidence_accumulation)
@@ -56,11 +54,9 @@ end
 function Pcorrect(n_fail, Prew, Psw; E1 = 1)
     1 .- Pwrong(n_fail, Prew, Psw; E1 = 1)
 end
-
-##
 @. expon(x,p) = p[1]*exp(x*p[2]) ## model for an exponent for fitting
 inverse_exp(y,p) = (log(y/p[1]))*1/p[2] ## model for an inverse exponent
-##
+
 function fit_protocol(prot)
     xdata = 0:size(prot,1)-1
     ydata = prot #evidence accumulation of n_fail consecutive omissions ::array
