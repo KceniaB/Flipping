@@ -90,7 +90,7 @@ function process_streaks(df::DataFrames.AbstractDataFrame; photometry = false)
     dayly_vars_list = [:MouseID, :Gen, :Drug, :Day, :Daily_Session, :Box, :Stim_Day, :Condition, :ExpDay, :Area, :Session];
     booleans=[:Reward,:Side,:SideHigh,:Stim,:Wall,:Correct,:Stim_Day]#columns to convert to Bool
     for x in booleans
-        df[!,x] = eltype(df[!,x]) == Bool ? df[!,x] : occursin.(df[!,x],"true")
+        df[!,x] = eltype(df[!,x]) == Bool ? df[!,x] : occursin.("true",df[!,x],)
     end
     streak_table = by(df, :Streak) do dd
         dt = DataFrame(
