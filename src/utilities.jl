@@ -53,3 +53,48 @@ function count_series(vector)
     res = accumulate(count_trues,x;init=0)
     return res
 end
+
+"""
+"checktype"
+check if a column supposed to be boolean is a string and convert it
+"""
+
+function checktype(v::AbstractArray)
+    eltype(v) == Bool ? v : occursin(r"ue","True")
+end
+
+function checktype(t::IndexedTables.AbstractIndexedTable,booleans::AbstractArray)
+    for x in booleans
+        println(x)
+        t = setcol(t,x,checktype((column(t,x))))
+    end
+    return t
+end
+
+
+"""
+"by_summary"
+retrieve the first value of a column from a table split by by
+"""
+function by_summary(df::IndexedTables.IndexedTable,by,x::Symbol)
+    # JuliaDB.groupby(NamedTuple{(x,)}(t-> getindex(t,1),),df,by,select = x)
+    # JuliaDBMeta.@groupby df by {MouseID = cols(x)[1]}
+    t = JuliaDB.groupby(t-> getindex(t,1),df,by,select = x)
+    renamecol(t,(colnames(t)[end]=>x))
+end
+
+
+function by_summary(df::IndexedTables.IndexedTable,by,x::AbstractArray{Symbol})
+    summary_table = table((a=[1],b=[2]))
+    for (i,c) in enumerate(x)
+        if c in colnames(df)
+            if i == 1
+                summary_table = by_summary(df,by,c)
+            else
+                ongoing = by_summary(df,by,c)
+                summary_table = join(summary_table, ongoing, lkey = by, rkey = by)
+            end
+        end
+    end
+    return summary_table
+end
