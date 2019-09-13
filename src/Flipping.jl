@@ -9,6 +9,7 @@ using Reexport
 @reexport using TextParse
 @reexport using ShiftedArrays
 @reexport using IterableTables
+@reexport using IndexedTables
 @reexport using JLD2
 @reexport using StaticArrays
 @reexport using DSP
