@@ -7,10 +7,10 @@ export process_pokes,process_streaks, create_exp_dataframe
 function process_pokes(filepath::String)
     curr_data = FileIO.load(filepath) |> DataFrame
     if !in(:Poke,names(curr_data))
-        rename!(curr_data, Symbol("") => :Poke) #change poke counter name
+        DataFrames.rename!(curr_data, Symbol("") => :Poke) #change poke counter name
     end
     if in(:delta,names(curr_data))
-        rename!(curr_data, :delta => :Delta)
+        DataFrames.rename!(curr_data, :delta => :Delta)
     end
     curr_data[:Poke] = curr_data[:Poke].+1
     start_time = curr_data[1,:PokeIn]
