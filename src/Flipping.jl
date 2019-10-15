@@ -19,10 +19,10 @@ using Reexport
 @reexport using Dates
 
 include("class.jl")
-include("utilities.jl")
-include("recorded_info.jl")
-include("process_varibles.jl")
-include("new_tools.jl")
+include("utilities.jl") #simple generic functions used for basic operations
+include("recorded_info.jl") #to extract info like MouseID date and session
+include("process_varibles.jl") #to compute things like interpoke interval
+include("new_tools.jl") #to process pokes or streaks or both
 include("saving&loading.jl")
 include("searchfile.jl")
 
