@@ -51,31 +51,30 @@ function process_pokes(filepath::String)
         curr_data[!,:Protocol] = string.(curr_data[!,:Prwd],'/',curr_data[!,:Ptrs])
     end
     mouse, day, daily_session, session = session_info(filepath)
-    curr_data[!,:MouseID] = mouse
-    curr_data[!,:Day] = parse(Int64,day)
-    curr_data[!,:Daily_Session] = daily_session
-    curr_data[!,:Session] = session
+    curr_data[!,:MouseID] .= mouse
+    curr_data[!,:Day] .= parse(Int64,day)
+    curr_data[!,:Daily_Session] .= daily_session
+    curr_data[!,:Session] .= session
     curr_data[!,:Gen] = Flipping.gen.(curr_data[:MouseID])
     curr_data[!,:Drug] = Flipping.pharm.(curr_data[:Day])
-    curr_data[!,:Stim_Day] = length(findall(curr_data[:Stim])) == 0 ? false : true
+    curr_data[!,:Stim_Day] .= length(findall(curr_data[:Stim])) == 0 ? false : true
     curr_data[!,:Streak] = count_sequence(curr_data[:Side])
     curr_data[!,:ReverseStreak] = reverse(curr_data[:Streak])
-    curr_data[!,:Poke_within_Streak] = 0
-    curr_data[!,:Poke_Hierarchy] = 0.0
+    curr_data[!,:Poke_within_Streak] .= 0
+    curr_data[!,:Poke_Hierarchy] .= 0.0
+    curr_data[!,:Poke_within_Streak] = Vector{Union{Float64,Missing}}(undef,size(curr_data,1))
     curr_data[!,:Pre_Interpoke] = Vector{Union{Float64,Missing}}(undef,size(curr_data,1))
     curr_data[!,:Post_Interpoke] = Vector{Union{Float64,Missing}}(undef,size(curr_data,1))
     by(curr_data,:Streak) do dd
-        dd[!,:Poke_within_Streak] = count_sequence(dd[!,:Poke])
-        dd[!,:Pre_Interpoke] =  dd[!,:PokeIn] .-lag(dd[!,:PokeOut],default = missing)
-        dd[!,:Post_Interpoke] = lead(dd[!,:PokeIn],default = missing).- dd[!,:PokeOut]
-        # prov = lead(dd[:PokeIn],default = 0.0) .- dd[:PokeOut]
-        # dd[:InterPoke]  = [x.< 0 ? 0 : x for x in prov]
-        dd[!,:Poke_Hierarchy] = Flipping.get_hierarchy(!,dd[:Reward])
+        dd[:,:Poke_within_Streak] = count_sequence(dd[!,:Poke])
+        dd[:,:Pre_Interpoke] =  dd[!,:PokeIn] .-lag(dd[!,:PokeOut],default = missing)
+        dd[:,:Post_Interpoke] = lead(dd[!,:PokeIn],default = missing).- dd[!,:PokeOut]
+        dd[:,:Poke_Hierarchy] = Flipping.get_hierarchy(dd[!,:Reward])
     end
     curr_data[!,:Block] = count_sequence(curr_data[!,:Wall])
-    curr_data[!,:Streak_within_Block] = 0
+    curr_data[!,:Streak_within_Block] .= 0
     by(curr_data,:Block) do dd
-        dd[!,:Streak_within_Block] = count_sequence(dd[!,:Side])
+        dd[:,:Streak_within_Block] = count_sequence(dd[!,:Side])
     end
     curr_data[!,:SideHigh] = [x ? "L" : "R" for x in curr_data[!,:SideHigh]]
     curr_data[!,:Correct] = curr_data[!,:Side] .== curr_data[!,:SideHigh]
